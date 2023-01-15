@@ -91,12 +91,12 @@ static void list_suites(FILE *file, const YacuSuite *suites)
     }
 }
 
-static void invalid_arguments()
+static void invalid_arguments() // GCOVR_EXCL_START - covered with test_invalid_arguments (fork, exit)
 {
     printf("Invalid arguments!\n");
     printf("%s\n", helpString);
     exit(WRONG_ARGS);
-}
+} // GCOVR_EXCL_STOP 
 
 static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuOptions *options, bool withTest)
 {
@@ -244,7 +244,7 @@ static void yacu_run_suites(YacuTestRun testRun, const YacuSuite *suites)
 
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
-    FILE *reportFile = strcmp(options.reportFile, "stdout") == 0 ? fopen(options.reportFile, "w") : stdout;
+    FILE *reportFile = strcmp(options.reportFile, "stdout") == 0 ? stdout : fopen(options.reportFile, "w");
     if (reportFile == NULL)
     {
         exit(FILE_FAIL);
