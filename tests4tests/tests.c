@@ -66,7 +66,7 @@ void test_fork(YacuTestRun testRun)
     }
 }
 
-void test_invalid_arguments(YacuTestRun testRun)
+void test_wrong_args(YacuTestRun testRun)
 {
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
@@ -83,10 +83,10 @@ void test_invalid_arguments(YacuTestRun testRun)
 
 void test_run_single_suite_with_fork(YacuTestRun testRun)
 {
-    // const char *argv[] = {"./tests", "--suite", "Assertions", "--report", "test_run_single_suite_with_fork.log"};
-    // YacuOptions options = yacu_process_args(5, argv);
-    // int returnCode = yacu_execute(options, suites4Others);
-    // yacu_assert_int_eq(testRun, returnCode, OK);
+    const char *argv[] = {"./tests", "--suite", "Assertions", "--report", "test_run_single_suite_with_fork.log"};
+    YacuOptions options = yacu_process_args(5, argv);
+    int returnCode = yacu_execute(options, suites4Others);
+    yacu_assert_int_eq(testRun, returnCode, OK);
 }
 
 YacuTest otherTests[] = {
@@ -96,7 +96,7 @@ YacuTest otherTests[] = {
     {"singleSuiteTest", &test_run_single_suite},
     {"singleSuiteTestWithFork", &test_run_single_suite_with_fork},
     {"forkTest", &test_fork},
-    {"invalidArgumentsTest", &test_invalid_arguments},
+    {"wrongArgsTest", &test_wrong_args},
     END_OF_TESTS};
 
 YacuSuite suites[] = {
