@@ -58,9 +58,7 @@ void test_fork(YacuTestRun testRun)
     yacu_report(testRun, "yacu_fork() = %d\n", pid);
     if (is_forked(pid))
     {
-        yacu_report(testRun, "child before exit\n");
         exit(FILE_FAIL);
-        yacu_report(testRun, "child after exit\n");
     }
     else
     {
