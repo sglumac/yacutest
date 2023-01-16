@@ -81,6 +81,52 @@ void test_wrong_args(YacuTestRun testRun)
     }
 }
 
+void test_missing_test_args(YacuTestRun testRun)
+{
+    YacuProcessHandle pid = yacu_fork();
+    if (is_forked(pid))
+    {
+        const char *argv[] = {"./tests", "--test"};
+        YacuOptions options = yacu_process_args(2, argv);
+    }
+    else
+    {
+        YacuExitCode returnCode = wait_for_forked(pid);
+        yacu_assert_int_eq(testRun, returnCode, WRONG_ARGS);
+    }
+}
+
+void test_missing_report_args(YacuTestRun testRun)
+{
+    YacuProcessHandle pid = yacu_fork();
+    if (is_forked(pid))
+    {
+        const char *argv[] = {"./tests", "--report"};
+        YacuOptions options = yacu_process_args(2, argv);
+    }
+    else
+    {
+        YacuExitCode returnCode = wait_for_forked(pid);
+        yacu_assert_int_eq(testRun, returnCode, WRONG_ARGS);
+    }
+}
+
+void test_report_creation_fail(YacuTestRun testRun)
+{
+    YacuProcessHandle pid = yacu_fork();
+    if (is_forked(pid))
+    {
+        const char *argv[] = {"./tests", "--report", "nonexistingdir/report.log"};
+        YacuOptions options = yacu_process_args(3, argv);
+        yacu_execute(options, suites4Others);
+    }
+    else
+    {
+        YacuExitCode returnCode = wait_for_forked(pid);
+        yacu_assert_int_eq(testRun, returnCode, FILE_FAIL);
+    }
+}
+
 void test_run_single_suite_with_fork(YacuTestRun testRun)
 {
     const char *argv[] = {"./tests", "--suite", "Assertions", "--report", "test_run_single_suite_with_fork.log"};
@@ -90,13 +136,17 @@ void test_run_single_suite_with_fork(YacuTestRun testRun)
 }
 
 YacuTest otherTests[] = {
-    {"listSuitesTest", &test_list_suites},
-    {"helpTest", &test_help},
-    {"singleTestTest", &test_run_single_test},
-    {"singleSuiteTest", &test_run_single_suite},
-    {"singleSuiteTestWithFork", &test_run_single_suite_with_fork},
-    {"forkTest", &test_fork},
-    {"wrongArgsTest", &test_wrong_args},
+    {"ListSuitesTest", &test_list_suites},
+    {"HelpTest", &test_help},
+    {"SingleTestTest", &test_run_single_test},
+    {"SingleSuiteTest", &test_run_single_suite},
+    {"SingleSuiteTestWithFork", &test_run_single_suite_with_fork},
+    {"ForkTest", &test_fork},
+    {"WrongArgsTest", &test_wrong_args},
+    {"MissingTestArgs", &test_missing_test_args},
+    {"MissingReportArgs", &test_missing_report_args},
+    {"MissingReportArgs", &test_missing_report_args},
+    {"ReportCreationTest", &test_report_creation_fail},
     END_OF_TESTS};
 
 YacuSuite suites[] = {
