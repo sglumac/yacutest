@@ -1,0 +1,17 @@
+image:
+  - Visual Studio 2022
+
+build: off
+
+install:
+- pip install gcovr
+
+test_script:
+- mkdir build
+- cd build
+- cmake -DCOVERAGE=True -DCMAKE_BUILD_TYPE=Debug ..
+- cmake --build . --target yacucoverage
+
+after_test:
+- gcovr -r . --xml coverage.xml
+- codecov
