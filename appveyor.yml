@@ -4,7 +4,6 @@ image:
 build: off
 
 install:
-- apt-get install gcov
 - pip install gcovr
 
 test_script:
