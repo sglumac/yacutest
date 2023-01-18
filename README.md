@@ -1,4 +1,4 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/github/sglumac/yacutest?branch=main?svg=true)](https://ci.appveyor.com/project/sglumac/yacutest)
-[![codecov](https://codecov.io/gh/sglumac/yacutest/branch/main/graph/graphs/sunburst.svg)](https://codecov.io/gh/sglumac/yacutest)
+[![codecov](https://codecov.io/gh/sglumac/yacutest/branch/main/graphs/sunburst.svg?token=AH5HSFGUJM)](https://codecov.io/gh/sglumac/yacutest)
 
 # yacutest
