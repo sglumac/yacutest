@@ -4,6 +4,7 @@ image:
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    GCC_VERSION: 7
 
 stack: python 3
 
