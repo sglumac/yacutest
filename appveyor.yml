@@ -1,10 +1,5 @@
 image:
-  - Ubuntu
-
-environment:
-  matrix:
-  - job_name: Ubuntu and GCC 7
-    APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+  - Ubuntu2004
 
 stack: python 3
 
