@@ -118,6 +118,14 @@ void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
 #define yacu_assert_int_gt(testRun, a, b) yacu_assert_int_cmp(testRun, a, >, b)
 #define yacu_assert_int_ge(testRun, a, b) yacu_assert_int_cmp(testRun, a, >=, b)
 
+#define yacu_assert_uint_cmp(testRun, a, cmp, b) yacu_assert_cmp(testRun, "%u", "%u", a, cmp, b)
+
+#define yacu_assert_uint_lt(testRun, a, b) yacu_assert_uint_cmp(testRun, a, <, b)
+#define yacu_assert_uint_le(testRun, a, b) yacu_assert_uint_cmp(testRun, a, <=, b)
+#define yacu_assert_uint_eq(testRun, a, b) yacu_assert_uint_cmp(testRun, a, ==, b)
+#define yacu_assert_uint_gt(testRun, a, b) yacu_assert_uint_cmp(testRun, a, >, b)
+#define yacu_assert_uint_ge(testRun, a, b) yacu_assert_uint_cmp(testRun, a, >=, b)
+
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
 typedef pid_t YacuProcessHandle;

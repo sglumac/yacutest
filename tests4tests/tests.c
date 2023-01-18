@@ -3,7 +3,18 @@
 
 void test_assert_cmp_int(YacuTestRun testRun)
 {
-    int small = 1;
+    int small = -1;
+
+    yacu_assert_int_lt(testRun, small, 0);
+    yacu_assert_int_le(testRun, small, -1);
+    yacu_assert_int_eq(testRun, small, -1);
+    yacu_assert_int_ge(testRun, small, -1);
+    yacu_assert_int_gt(testRun, small, -2);
+}
+
+void test_assert_cmp_uint(YacuTestRun testRun)
+{
+    unsigned int small = 1;
 
     yacu_assert_int_lt(testRun, small, 2);
     yacu_assert_int_le(testRun, small, 1);
@@ -14,6 +25,7 @@ void test_assert_cmp_int(YacuTestRun testRun)
 
 YacuTest assertionTests[] = {
     {"cmpIntTest", &test_assert_cmp_int},
+    {"cmpUintTest", &test_assert_cmp_uint},
     END_OF_TESTS};
 
 YacuSuite suites4Others[] = {
