@@ -1,6 +1,5 @@
-.. image:: https://codecov.io/github/sglumac/yacutest/coverage.svg?branch=master
+.. image:: https://codecov.io/gh/sglumac/yacutest/branch/main/graph/badge.svg
     :alt: Coverage Status
-    :target: https://codecov.io/github/sglumac/yacutest
-
+    :target: https://codecov.io/gh/sglumac/yacutest
 
 # yacutest
