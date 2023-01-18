@@ -8,8 +8,8 @@ if (COVERAGE STREQUAL "True")
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_html(
         NAME yacucoverage
-        EXECUTABLE tests --report tests.log --no-fork
-        DEPENDENCIES tests
+        EXECUTABLE tests4tests --report tests4tests.log --no-fork
+        DEPENDENCIES tests4tests
         BASE_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
 endif()
