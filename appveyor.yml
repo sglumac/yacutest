@@ -20,10 +20,9 @@ test_script:
 - cd build
 - cmake -DCOVERAGE=True -DCMAKE_BUILD_TYPE=Debug ..
 - cmake --build . --target yacucoverage
+- cd ..
 
 after_test:
-- ls -r
-- cp -r build/yacucoverage yacucoverage
 - ls -r
 - gcovr -r . --xml coverage.xml
 - codecov
