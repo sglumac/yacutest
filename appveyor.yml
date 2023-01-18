@@ -13,6 +13,7 @@ install:
 - pip install gcovr
 - pip --version
 - python --version
+- pip install codecov
 
 test_script:
 - mkdir build
