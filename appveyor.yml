@@ -4,7 +4,9 @@ image:
 build: off
 
 install:
-- pip3 install gcovr
+- pip install gcovr
+- pip --version
+- python --version
 
 test_script:
 - mkdir build
