@@ -25,4 +25,4 @@ test_script:
 
 after_test:
 - gcovr --xml coverage.xml
-- codecov --file coverage.xml
+- codecov --dsiable gcov --file coverage.xml
