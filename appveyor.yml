@@ -10,12 +10,15 @@ stack: python 3
 build: off
 
 install:
+- pip install gcovr
+- pip install codecov
 - pip --version
 - python --version
 - gcc --version
+- which gcc
 - gcov --version
-- pip install gcovr
-- pip install codecov
+- which gcov
+- codecov --version
 
 test_script:
 - mkdir build
