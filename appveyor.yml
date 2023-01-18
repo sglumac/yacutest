@@ -13,5 +13,5 @@ test_script:
 - cmake --build . --target yacucoverage
 
 after_test:
-- gcovr -r . --xml coverage.xml
+- python -m gcovr -r . --xml coverage.xml
 - codecov
