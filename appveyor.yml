@@ -24,5 +24,4 @@ test_script:
 - cd ..
 
 after_test:
-- gcovr -r . --xml coverage.xml
-- codecov -X gcov --file coverage.xml
+- codecov
