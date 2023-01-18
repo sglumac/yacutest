@@ -25,4 +25,5 @@ test_script:
 - cd ..
 
 after_test:
-- codecov -X gcov --root build/yacucoverage
+- gcovr -r . --xml coverage.xml
+- codecov -X gcov --file coverage.xml
