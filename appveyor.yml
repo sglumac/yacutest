@@ -25,4 +25,4 @@ test_script:
 - cd ..
 
 after_test:
-- codecov
+- codecov -X gcov
