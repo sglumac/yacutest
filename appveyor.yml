@@ -4,7 +4,7 @@ image:
 build: off
 
 install:
-- pip install gcovr
+- pip3 install gcovr
 
 test_script:
 - mkdir build
@@ -13,5 +13,5 @@ test_script:
 - cmake --build . --target yacucoverage
 
 after_test:
-- python -m gcovr -r . --xml coverage.xml
+- gcovr -r . --xml coverage.xml
 - codecov
