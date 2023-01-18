@@ -3,8 +3,8 @@ image:
 
 environment:
   matrix:
-  - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    GCC_VERSION: 7
+  - job_name: Ubuntu and GCC 7
+    APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
 
 stack: python 3
 
