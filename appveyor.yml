@@ -22,8 +22,8 @@ test_script:
 - cmake --build . --target yacucoverage
 
 after_test:
-- ls
+- ls -r
 - cp -r build/yacucoverage yacucoverage
-- ls
+- ls -r
 - gcovr -r . --xml coverage.xml
 - codecov
