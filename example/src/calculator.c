@@ -26,6 +26,22 @@ SOFTWARE.
 
 #include <calculator.h>
 
-double sum(double a, double b) {
+double sum(double a, double b)
+{
     return a + b;
+}
+
+double difference(double a, double b)
+{
+    return a - b;
+}
+
+double product(double a, double b)
+{
+    return a * b;
+}
+
+double quotient(double a, double b)
+{
+    return a / b;
 }

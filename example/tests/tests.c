@@ -1,7 +1,13 @@
 #include <yacu.h>
 
+#include <calculator.h>
+
 void test_sum(YacuTestRun testRun)
 {
+    double a = 2., b = 3.;
+    double result = a + b;
+    double tol = 1e-6;
+    YACU_ASSERT_APPROX_EQ_DBL(testRun, result, 5., tol)
 }
 
 YacuTest calculatorTests[] = {
