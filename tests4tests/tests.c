@@ -5,29 +5,29 @@ void test_assert_cmp_int(YacuTestRun testRun)
 {
     int small = -1;
 
-    YACU_ASSERT_INT_LT(testRun, small, 0);
-    YACU_ASSERT_INT_LE(testRun, small, -1);
-    YACU_ASSERT_INT_EQ(testRun, small, -1);
-    YACU_ASSERT_INT_GE(testRun, small, -1);
-    YACU_ASSERT_INT_GT(testRun, small, -2);
+    YACU_ASSERT_LT_INT(testRun, small, 0);
+    YACU_ASSERT_LE_INT(testRun, small, -1);
+    YACU_ASSERT_EQ_INT(testRun, small, -1);
+    YACU_ASSERT_GE_INT(testRun, small, -1);
+    YACU_ASSERT_GT_INT(testRun, small, -2);
 }
 
 void test_assert_cmp_uint(YacuTestRun testRun)
 {
     unsigned int small = 1;
 
-    YACU_ASSERT_INT_LT(testRun, small, 2);
-    YACU_ASSERT_INT_LE(testRun, small, 1);
-    YACU_ASSERT_INT_EQ(testRun, small, 1);
-    YACU_ASSERT_INT_GE(testRun, small, 1);
-    YACU_ASSERT_INT_GT(testRun, small, 0);
+    YACU_ASSERT_LT_UINT(testRun, small, 2);
+    YACU_ASSERT_LE_UINT(testRun, small, 1);
+    YACU_ASSERT_EQ_UINT(testRun, small, 1);
+    YACU_ASSERT_GE_UINT(testRun, small, 1);
+    YACU_ASSERT_GT_UINT(testRun, small, 0);
 }
 
 void test_assert_eq_dbl(YacuTestRun testRun)
 {
     double x = 1.1;
 
-    YACU_ASSERT_APPROX_DBL_EQ(testRun, x, 1.2, 0.2)
+    YACU_ASSERT_APPROX_EQ_DBL(testRun, x, 1.2, 0.2)
 }
 
 YacuTest assertionTests[] = {
@@ -45,7 +45,7 @@ void test_list_suites(YacuTestRun testRun)
     const char *argv[] = {"./tests", "--list", "--no-fork", "--report", "test_list_suites.log"};
     YacuOptions options = yacu_process_args(5, argv);
     int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_INT_EQ(testRun, returnCode, 0);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
 }
 
 void test_help(YacuTestRun testRun)
@@ -53,7 +53,7 @@ void test_help(YacuTestRun testRun)
     const char *argv[] = {"./tests", "--help", "--report", "test_help.log"};
     YacuOptions options = yacu_process_args(4, argv);
     int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_INT_EQ(testRun, returnCode, 0);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
 }
 
 void test_run_single_test(YacuTestRun testRun)
@@ -61,7 +61,7 @@ void test_run_single_test(YacuTestRun testRun)
     const char *argv[] = {"./tests", "--test", "Assertions", "cmpIntTest", "--no-fork", "--report", "test_run_single_test.log"};
     YacuOptions options = yacu_process_args(7, argv);
     int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_INT_EQ(testRun, returnCode, 0);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
 }
 
 void test_run_single_suite(YacuTestRun testRun)
@@ -69,7 +69,7 @@ void test_run_single_suite(YacuTestRun testRun)
     const char *argv[] = {"./tests", "--suite", "Assertions", "--no-fork", "--report", "test_run_single_suite.log"};
     YacuOptions options = yacu_process_args(6, argv);
     int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_INT_EQ(testRun, returnCode, OK);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 void test_fork(YacuTestRun testRun)
@@ -82,7 +82,7 @@ void test_fork(YacuTestRun testRun)
     else
     {
         YacuExitCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_INT_EQ(testRun, returnCode, FILE_FAIL);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
     }
 }
 
@@ -97,7 +97,7 @@ void test_wrong_args(YacuTestRun testRun)
     else
     {
         YacuExitCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_INT_EQ(testRun, returnCode, WRONG_ARGS);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
 
@@ -112,7 +112,7 @@ void test_missing_test_args(YacuTestRun testRun)
     else
     {
         YacuExitCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_INT_EQ(testRun, returnCode, WRONG_ARGS);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
 
@@ -127,7 +127,7 @@ void test_missing_report_args(YacuTestRun testRun)
     else
     {
         YacuExitCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_INT_EQ(testRun, returnCode, WRONG_ARGS);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
 
@@ -143,7 +143,7 @@ void test_report_creation_fail(YacuTestRun testRun)
     else
     {
         YacuExitCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_INT_EQ(testRun, returnCode, FILE_FAIL);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
     }
 }
 
@@ -152,7 +152,7 @@ void test_run_single_suite_with_fork(YacuTestRun testRun)
     const char *argv[] = {"./tests", "--suite", "Assertions", "--report", "test_run_single_suite_with_fork.log"};
     YacuOptions options = yacu_process_args(5, argv);
     int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_INT_EQ(testRun, returnCode, OK);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 YacuTest otherTests[] = {

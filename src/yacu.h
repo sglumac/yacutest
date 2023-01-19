@@ -110,21 +110,21 @@ void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
         }                                                                        \
     }
 
-#define YACU_ASSERT_INT_CMP(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
+#define YACU_ASSERT_CMP_INT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
 
-#define YACU_ASSERT_INT_LT(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, <, b)
-#define YACU_ASSERT_INT_LE(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, <=, b)
-#define YACU_ASSERT_INT_EQ(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, ==, b)
-#define YACU_ASSERT_INT_GT(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, >, b)
-#define YACU_ASSERT_INT_GE(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, >=, b)
+#define YACU_ASSERT_LT_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, <, b)
+#define YACU_ASSERT_LE_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, <=, b)
+#define YACU_ASSERT_EQ_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, ==, b)
+#define YACU_ASSERT_GT_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, >, b)
+#define YACU_ASSERT_GE_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, >=, b)
 
-#define YACU_ASSERT_UINT_CMP(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%u", "%u", a, cmp, b)
+#define YACU_ASSERT_CMP_UINT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%u", "%u", a, cmp, b)
 
-#define YACU_ASSERT_UINT_LT(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, <, b)
-#define YACU_ASSERT_UINT_LE(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, <=, b)
-#define YACU_ASSERT_UINT_EQ(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, ==, b)
-#define YACU_ASSERT_UINT_GT(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, >, b)
-#define YACU_ASSERT_UINT_GE(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, >=, b)
+#define YACU_ASSERT_LT_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, <, b)
+#define YACU_ASSERT_LE_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, <=, b)
+#define YACU_ASSERT_EQ_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, ==, b)
+#define YACU_ASSERT_GT_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, >, b)
+#define YACU_ASSERT_GE_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, >=, b)
 
 #define YACU_ABS(x) (x > 0 ? x : -x)
 
@@ -140,7 +140,7 @@ void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
         }                                                                                            \
     }
 
-#define YACU_ASSERT_APPROX_DBL_EQ(testRun, a, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
+#define YACU_ASSERT_APPROX_EQ_DBL(testRun, a, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
 
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
