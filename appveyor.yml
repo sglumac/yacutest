@@ -11,9 +11,7 @@ install:
 - pip --version
 - python --version
 - gcc --version
-- which gcc
 - gcov --version
-- which gcov
 - codecov --version
 
 test_script:
