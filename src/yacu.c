@@ -56,7 +56,7 @@ YacuOptions default_options()
         .fork = true,
         .suiteName = NULL,
         .testName = NULL,
-        .reportFile = NULL};
+        .reportFile = "stdout"};
     return options;
 }
 
