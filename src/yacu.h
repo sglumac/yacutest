@@ -98,7 +98,7 @@ YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
 
-#define yacu_assert_cmp(testRun, afmt, bfmt, a, cmp, b)                          \
+#define YACU_ASSERT_CMP(testRun, afmt, bfmt, a, cmp, b)                          \
     {                                                                            \
         if (!(a cmp b))                                                          \
         {                                                                        \
@@ -110,21 +110,37 @@ void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
         }                                                                        \
     }
 
-#define yacu_assert_int_cmp(testRun, a, cmp, b) yacu_assert_cmp(testRun, "%d", "%d", a, cmp, b)
+#define YACU_ASSERT_INT_CMP(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
 
-#define yacu_assert_int_lt(testRun, a, b) yacu_assert_int_cmp(testRun, a, <, b)
-#define yacu_assert_int_le(testRun, a, b) yacu_assert_int_cmp(testRun, a, <=, b)
-#define yacu_assert_int_eq(testRun, a, b) yacu_assert_int_cmp(testRun, a, ==, b)
-#define yacu_assert_int_gt(testRun, a, b) yacu_assert_int_cmp(testRun, a, >, b)
-#define yacu_assert_int_ge(testRun, a, b) yacu_assert_int_cmp(testRun, a, >=, b)
+#define YACU_ASSERT_INT_LT(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, <, b)
+#define YACU_ASSERT_INT_LE(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, <=, b)
+#define YACU_ASSERT_INT_EQ(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, ==, b)
+#define YACU_ASSERT_INT_GT(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, >, b)
+#define YACU_ASSERT_INT_GE(testRun, a, b) YACU_ASSERT_INT_CMP(testRun, a, >=, b)
 
-#define yacu_assert_uint_cmp(testRun, a, cmp, b) yacu_assert_cmp(testRun, "%u", "%u", a, cmp, b)
+#define YACU_ASSERT_UINT_CMP(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%u", "%u", a, cmp, b)
 
-#define yacu_assert_uint_lt(testRun, a, b) yacu_assert_uint_cmp(testRun, a, <, b)
-#define yacu_assert_uint_le(testRun, a, b) yacu_assert_uint_cmp(testRun, a, <=, b)
-#define yacu_assert_uint_eq(testRun, a, b) yacu_assert_uint_cmp(testRun, a, ==, b)
-#define yacu_assert_uint_gt(testRun, a, b) yacu_assert_uint_cmp(testRun, a, >, b)
-#define yacu_assert_uint_ge(testRun, a, b) yacu_assert_uint_cmp(testRun, a, >=, b)
+#define YACU_ASSERT_UINT_LT(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, <, b)
+#define YACU_ASSERT_UINT_LE(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, <=, b)
+#define YACU_ASSERT_UINT_EQ(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, ==, b)
+#define YACU_ASSERT_UINT_GT(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, >, b)
+#define YACU_ASSERT_UINT_GE(testRun, a, b) YACU_ASSERT_UINT_CMP(testRun, a, >=, b)
+
+#define YACU_ABS(x) (x > 0 ? x : -x)
+
+#define YACU_ASSERT_APPROX_EQ(testRun, afmt, bfmt, tolfmt, a, b, tol)                                \
+    {                                                                                                \
+        if (!(YACU_ABS(a - b) < tol))                                                                              \
+        {                                                                                            \
+            yacu_report(                                                                             \
+                testRun,                                                                             \
+                "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
+                #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
+            exit(TEST_FAIL);                                                                         \
+        }                                                                                            \
+    }
+
+#define YACU_ASSERT_APPROX_DBL_EQ(testRun, a, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
 
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
