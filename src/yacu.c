@@ -29,7 +29,6 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
-
 static bool end_of_suites(const YacuSuite suite)
 {
     return suite.name == 0;
@@ -217,76 +216,46 @@ static void yacu_run_test(YacuTestRun testRun, YacuTest test)
     yacu_report(testRun, "#result: %s\n", testResult);
 }
 
-static void yacu_run_suite(YacuTestRun testRun, YacuSuite suite)
-{
-    yacu_report(testRun, "##suite: %s\n", suite.name);
-    for (const YacuTest *test = suite.tests; !end_of_tests(*test); test++)
-    {
-        yacu_run_test(testRun, *test);
-    }
-}
-
-static void yacu_run_suites(YacuTestRun testRun, const YacuSuite *suites)
-{
-    for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
-    {
-        yacu_run_suite(testRun, *suiteIt);
-    }
-}
-
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
     FILE *reportFile = strcmp(options.reportFile, "stdout") == 0 ? stdout : fopen(options.reportFile, "w");
     if (reportFile == NULL)
     {
         exit(FILE_FAIL);
-   }
-   YacuTestRun testRun = {options, reportFile};
-   if (options.suiteName)
-   {
-        for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
+    }
+    YacuTestRun testRun = {options, reportFile};
+    for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
+    {
+        if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
-            if (strcmp(options.suiteName, suiteIt->name) == 0)
+            yacu_report(testRun, "##suite: %s\n", suiteIt->name);
+            for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
             {
-                if (options.testName)
+                if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
-                    for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
-                    {
-                        if (strcmp(options.testName, testIt->name) == 0)
-                        {
-                            yacu_run_test(testRun, *testIt);
-                        }
-                    }
-                }
-                else
-                {
-                    yacu_run_suite(testRun, *suiteIt);
+                    yacu_run_test(testRun, *testIt);
                 }
             }
         }
-   }
-   else
-   {
-        yacu_run_suites(testRun, suites);
-   }
-   fclose(testRun.report);
+    }
+    fclose(testRun.report);
 }
 
 YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
-   switch (options.action)
-   {
-   case LIST:
+    switch (options.action)
+    {
+    case LIST:
         list_suites(stdout, suites);
         break;
-   case RUN_TESTS:
+    case RUN_TESTS:
         run_tests(options, suites);
         break;
-   case HELP:
+    case HELP:
         printf("%s\n", helpString);
         break;
-   default:
+    default:
         return FATAL;
-   }
-   return OK;
+    }
+    return OK;
 }

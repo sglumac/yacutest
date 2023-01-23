@@ -130,7 +130,7 @@ void yacu_report(YacuTestRun testRun, const char *msgFormat, ...);
 
 #define YACU_ASSERT_APPROX_EQ(testRun, afmt, bfmt, tolfmt, a, b, tol)                                \
     {                                                                                                \
-        if (!(YACU_ABS(a - b) < tol))                                                                              \
+        if (!(YACU_ABS(a - b) < tol))                                                                \
         {                                                                                            \
             yacu_report(                                                                             \
                 testRun,                                                                             \
