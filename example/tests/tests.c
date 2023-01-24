@@ -2,7 +2,7 @@
 
 #include <calculator.h>
 
-void test_sum(YacuTestRun testRun)
+void test_sum(YacuTestRun* testRun)
 {
     double a = 2., b = 3.;
     double result = a + b;

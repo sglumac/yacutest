@@ -39,15 +39,6 @@ static bool end_of_tests(const YacuTest test)
     return test.name == 0;
 }
 
-void yacu_report(YacuTestRun testRun, const char *msgFormat, ...)
-{
-    va_list args;
-    va_start(args, msgFormat);
-    vfprintf(testRun.report, msgFormat, args);
-    fflush(testRun.report);
-    va_end(args);
-}
-
 YacuOptions default_options()
 {
     YacuOptions options = {
@@ -55,7 +46,7 @@ YacuOptions default_options()
         .fork = true,
         .suiteName = NULL,
         .testName = NULL,
-        .reportFile = "stdout"};
+        .jUnitPath = NULL};
     return options;
 }
 
@@ -70,10 +61,8 @@ const char *helpString = "Usage: [<option1> <option2>...]\n"
                          " --list\n"
                          "     Prints the list of all available suites and tests.\n"
                          "     This should be the only option used.\n"
-                         " --report <file>\n"
-                         "     Store the test reports in <file>.\n"
-                         "     If <file> == \"stdout\" the test reports are written to standard output.\n"
-                         "     Test reports are written to standard output by default.\n"
+                         " --junit <xmlFile>"
+                         "     Save the test reports in <xmlFile> in JUnit format.\n"
                          " --help\n"
                          "     Prints this help message and exits.\n"
                          "     This should be the only option used.";
@@ -128,13 +117,13 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
             process_test_or_suite_arg(i, argc, argv, &options, false);
             i++;
         }
-        else if (strcmp(argv[i], "--report") == 0)
+        else if (strcmp(argv[i], "--junit") == 0)
         {
             if (argc <= i + 1)
             {
                 exit(WRONG_ARGS);
             }
-            options.reportFile = argv[i + 1];
+            options.jUnitPath = argv[i + 1];
             i++;
         }
         else if (strcmp(argv[i], "--no-fork") == 0)
@@ -190,16 +179,16 @@ YacuExitCode wait_for_forked(YacuProcessHandle forkedId)
 #endif
 }
 
-static void yacu_run_test(YacuTestRun testRun, YacuTest test)
+static YacuTestRun yacu_run_test(bool forked, YacuTest test)
 {
-    yacu_report(testRun, "#test: %s\n", test.name);
+    YacuTestRun testRun;
     bool testPassed = false;
-    if (testRun.options.fork)
+    if (forked)
     {
         YacuProcessHandle pid = yacu_fork();
         if (is_forked(pid))
         {
-            test.fcn(testRun);
+            test.fcn(&testRun);
             exit(OK);
         }
         else
@@ -209,36 +198,40 @@ static void yacu_run_test(YacuTestRun testRun, YacuTest test)
     }
     else
     {
-        test.fcn(testRun);
+        test.fcn(&testRun);
         testPassed = true;
     }
     const char *testResult = testPassed ? "." : "F";
-    yacu_report(testRun, "#result: %s\n", testResult);
+    printf("#result: %s\n", testResult);
 }
 
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
-    FILE *reportFile = strcmp(options.reportFile, "stdout") == 0 ? stdout : fopen(options.reportFile, "w");
-    if (reportFile == NULL)
+    FILE *jUnitFile = options.jUnitPath == NULL ? NULL : fopen(options.jUnitPath, "w");
+    if (options.jUnitPath != NULL)
     {
         exit(FILE_FAIL);
     }
-    YacuTestRun testRun = {options, reportFile};
+    const char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE] =
+        "<?xml version=\" 1.0 \" encoding=\" UTF - 8 \"?>\n"
+        "<testsuites>\n";
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
-            yacu_report(testRun, "##suite: %s\n", suiteIt->name);
             for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
             {
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
-                    yacu_run_test(testRun, *testIt);
+                    YacuTestRun testRun = yacu_run_test(options.fork, *testIt);
                 }
             }
         }
     }
-    fclose(testRun.report);
+    if (jUnitFile != NULL)
+    {
+        fclose(jUnitFile);
+    }
 }
 
 YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites)
