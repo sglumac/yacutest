@@ -50,6 +50,23 @@ YacuOptions default_options()
     return options;
 }
 
+static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format, ...)
+{
+    size_t bufferLength = strlen(buffer);
+    va_list args;
+    va_start(args, format);
+    snprintf(buffer + bufferLength, YACU_JUNIT_MAX_SIZE - bufferLength, format, args);
+    va_end(args);
+}
+
+void test_run_message_append(YacuTestRun *testRun, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    buffer_append(testRun->message, YACU_TEST_RUN_MESSAGE_MAX_SIZE, format, args);
+    va_end(args);
+}
+
 const char *helpString = "Usage: [<option1> <option2>...]\n"
                          " --no-fork\n"
                          "     Do not use fork from unistd.h to run the tests.\n"
@@ -161,7 +178,7 @@ bool is_forked(YacuProcessHandle pid)
 #endif
 }
 
-YacuExitCode wait_for_forked(YacuProcessHandle forkedId)
+YacuReturnCode wait_for_forked(YacuProcessHandle forkedId)
 {
 #ifdef FORK_AVAILABLE
     int status;
@@ -172,7 +189,7 @@ YacuExitCode wait_for_forked(YacuProcessHandle forkedId)
     }
     else
     {
-        return INTERRUPTED;
+        return TEST_ERROR;
     }
 #else
     return OK;
@@ -181,8 +198,9 @@ YacuExitCode wait_for_forked(YacuProcessHandle forkedId)
 
 static YacuTestRun yacu_run_test(bool forked, YacuTest test)
 {
-    YacuTestRun testRun;
+    YacuTestRun testRun = {OK, ""};
     bool testPassed = false;
+    YacuReturnCode returnCode;
     if (forked)
     {
         YacuProcessHandle pid = yacu_fork();
@@ -193,48 +211,70 @@ static YacuTestRun yacu_run_test(bool forked, YacuTest test)
         }
         else
         {
-            testPassed = wait_for_forked(pid) == OK;
+            returnCode = wait_for_forked(pid);
         }
     }
     else
     {
         test.fcn(&testRun);
-        testPassed = true;
     }
-    const char *testResult = testPassed ? "." : "F";
-    printf("#result: %s\n", testResult);
+    return testRun;
 }
 
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
     FILE *jUnitFile = options.jUnitPath == NULL ? NULL : fopen(options.jUnitPath, "w");
-    if (options.jUnitPath != NULL)
+    if (options.jUnitPath != NULL && jUnitFile == NULL)
     {
         exit(FILE_FAIL);
     }
-    const char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE] =
+    char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE] =
         "<?xml version=\" 1.0 \" encoding=\" UTF - 8 \"?>\n"
         "<testsuites>\n";
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add suite\n");
             for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
             {
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
+                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add test\n");
                     YacuTestRun testRun = yacu_run_test(options.fork, *testIt);
+
+                    switch (testRun.result)
+                    {
+                    case OK:
+                        printf(".");
+                        break;
+                    case TEST_FAILURE:
+                        buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add failure\n");
+                        printf("F");
+                        break;
+                    case TEST_ERROR:
+                        buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add error\n");
+                        printf("E");
+                        break;
+                    default:
+                        break;
+                    }
+                    if (strlen(testRun.message) > 0)
+                    {
+                        printf("%s\n", testRun.message);
+                    }
                 }
             }
         }
     }
     if (jUnitFile != NULL)
     {
+        fprintf(jUnitFile, jUnitBuffer);
         fclose(jUnitFile);
     }
 }
 
-YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites)
+YacuReturnCode yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
     switch (options.action)
     {

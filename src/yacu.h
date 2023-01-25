@@ -51,16 +51,16 @@ typedef struct YacuOptions
 
 YacuOptions default_options();
 
-typedef enum YacuExitCode
+typedef enum YacuReturnCode
 {
     OK = 0,
     WRONG_ARGS = 1,
-    TEST_FAIL = 2,
+    TEST_FAILURE = 2,
     FORK_FAIL = 3,
     FILE_FAIL = 4,
     FATAL = 5,
-    INTERRUPTED = 6
-} YacuExitCode;
+    TEST_ERROR = 6
+} YacuReturnCode;
 
 #ifndef YACU_JUNIT_MAX_SIZE
 #define YACU_JUNIT_MAX_SIZE 1000000
@@ -70,16 +70,9 @@ typedef enum YacuExitCode
 #define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
 #endif
 
-typedef enum YacuTestResult
-{
-    RESULT_SUCCESS = 0,
-    RESULT_FAILURE = 1,
-    RESULT_ERROR = 2
-} YacuTestResult;
-
 typedef struct YacuTestRun
 {
-    YacuTestResult result;
+    YacuReturnCode result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
 
 } YacuTestRun;
@@ -110,19 +103,20 @@ typedef struct YacuSuite
 
 YacuOptions yacu_process_args(int argc, char const *argv[]);
 
-YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites);
+YacuReturnCode yacu_execute(YacuOptions options, const YacuSuite *suites);
 
-#define YACU_ASSERT_CMP(testRun, afmt, bfmt, a, cmp, b)                               \
-    {                                                                                 \
-        if (!(a cmp b))                                                               \
-        {                                                                             \
-            snprintf(testRun->message,                                                \
-                     YACU_TEST_RUN_MESSAGE_MAX_SIZE,                                  \
-                     "Condition %s %s %s (" afmt " %s " bfmt ") failed at (%s:%d)\n", \
-                     #a, #cmp, #b, a, #cmp, b, __FILE__, __LINE__);                   \
-            testRun->result = RESULT_FAILURE;                                         \
-            exit(TEST_FAIL);                                                          \
-        }                                                                             \
+void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
+
+#define YACU_ASSERT_CMP(testRun, afmt, bfmt, a, cmp, b)                                              \
+    {                                                                                                \
+        if (!(a cmp b))                                                                              \
+        {                                                                                            \
+            test_run_message_append(testRun,                                                         \
+                                    "Condition %s %s %s (" afmt " %s " bfmt ") failed at (%s:%d)\n", \
+                                    #a, #cmp, #b, a, #cmp, b, __FILE__, __LINE__);                   \
+            testRun->result = TEST_FAILURE;                                                          \
+            exit(TEST_FAILURE);                                                                      \
+        }                                                                                            \
     }
 
 #define YACU_ASSERT_CMP_INT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
@@ -143,16 +137,16 @@ YacuExitCode yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 #define YACU_ABS(x) (x > 0 ? x : -x)
 
-#define YACU_ASSERT_APPROX_EQ(testRun, afmt, bfmt, tolfmt, a, b, tol)                                     \
-    {                                                                                                     \
-        if (!(YACU_ABS(a - b) < tol))                                                                     \
-        {                                                                                                 \
-            snprintf(testRun->message,                                                                    \
-                     YACU_TEST_RUN_MESSAGE_MAX_SIZE,                                                      \
-                     "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
-                     #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
-            exit(TEST_FAIL);                                                                              \
-        }                                                                                                 \
+#define YACU_ASSERT_APPROX_EQ(testRun, afmt, bfmt, tolfmt, a, b, tol)                                                    \
+    {                                                                                                                    \
+        if (!(YACU_ABS(a - b) < tol))                                                                                    \
+        {                                                                                                                \
+            test_run_message_append(testRun,                                                                             \
+                                    "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
+                                    #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
+            testRun->result = TEST_FAILURE;                                                                              \
+            exit(TEST_FAILURE);                                                                                          \
+        }                                                                                                                \
     }
 
 #define YACU_ASSERT_APPROX_EQ_DBL(testRun, a, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
@@ -170,6 +164,6 @@ YacuProcessHandle yacu_fork();
 
 bool is_forked(YacuProcessHandle pid);
 
-YacuExitCode wait_for_forked(YacuProcessHandle forkedId);
+YacuReturnCode wait_for_forked(YacuProcessHandle forkedId);
 
 #endif // YACU_H
