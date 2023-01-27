@@ -55,7 +55,7 @@ static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format
     size_t bufferLength = strlen(buffer);
     va_list args;
     va_start(args, format);
-    snprintf(buffer + bufferLength, YACU_JUNIT_MAX_SIZE - bufferLength, format, args);
+    vsnprintf(buffer + bufferLength, YACU_JUNIT_MAX_SIZE - bufferLength, format, args);
     va_end(args);
 }
 
@@ -229,18 +229,24 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
         exit(FILE_FAIL);
     }
     char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE] =
-        "<?xml version=\" 1.0 \" encoding=\" UTF - 8 \"?>\n"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<testsuites>\n";
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add suite\n");
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                          "  <testsuite package=\"\" id=\"0\" name=\"%s\" timestamp=\"2022-12-08T13:00:00\" hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n",
+                          suiteIt->name);
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                          "    <properties/>\n", suiteIt->name);
             for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
             {
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
-                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add test\n");
+                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                                  "    <testcase classname=\"\" name=\"%s\" time=\"0.0\">\n",
+                                  testIt->name);
                     YacuTestRun testRun = yacu_run_test(options.fork, *testIt);
 
                     switch (testRun.result)
@@ -263,10 +269,15 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
                     {
                         printf("%s\n", testRun.message);
                     }
+                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    </testcase>\n");
                 }
             }
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    <system-out/>\n");
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    <system-err/>\n");
+            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "  </testsuite>\n");
         }
     }
+    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "</testsuites>\n");
     if (jUnitFile != NULL)
     {
         fprintf(jUnitFile, jUnitBuffer);

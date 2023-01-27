@@ -24,3 +24,9 @@ test_script:
 after_test:
 - gcovr --xml coverage.xml
 - codecov --disable gcov --file coverage.xml
+
+on_finish:
+  # Upload test results to AppVeyor
+  - ps: |
+      $wc = New-Object 'System.Net.WebClient'
+      $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path ./build/tests4tests.xml))
