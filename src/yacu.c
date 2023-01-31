@@ -239,6 +239,14 @@ static JUnitReport junit_initialize_report(FILE *jUnitFile)
     return initial;
 }
 
+static void junit_finalize_suite(JUnitReport *current)
+{
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "    <system-out/>\n"
+                  "    <system-err/>\n"
+                  "  </testsuite>\n");
+}
+
 static void junit_on_start_suite(YacuReportState state, const char *suiteName)
 {
     JUnitReport *current = (JUnitReport *)state;
@@ -246,10 +254,7 @@ static void junit_on_start_suite(YacuReportState state, const char *suiteName)
     struct tm tm = *localtime(&t);
     if (!current->firstSuite)
     {
-        buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                      "    <system-out/>\n"
-                      "    <system-err/>\n"
-                      "  </testsuite>\n");
+        junit_finalize_suite(current);
     }
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "  <testsuite package=\"\" id=\"0\" name=\"%s\"", suiteName);
@@ -281,6 +286,7 @@ static void junit_on_test_done(YacuReportState state, YacuTestRun testRun)
 static void junit_flush(YacuReportState state)
 {
     JUnitReport *current = (JUnitReport *)state;
+    junit_finalize_suite(current);
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "</testsuites>\n");
     if (current->jUnitFile != NULL)
@@ -309,6 +315,7 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
                 {
                     junit_on_test_start(&report, testIt->name);
                     YacuTestRun testRun = yacu_run_test(options.fork, *testIt);
+                    junit_on_test_done(&report, testRun);
 
                     switch (testRun.result)
                     {
