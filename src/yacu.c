@@ -285,7 +285,7 @@ static void junit_flush(YacuReportState state)
                   "</testsuites>\n");
     if (current->jUnitFile != NULL)
     {
-        fprintf(current->jUnitFile, current->jUnitBuffer);
+        fprintf(current->jUnitFile, "%s", current->jUnitBuffer);
         fclose(current->jUnitFile);
     }
 };
