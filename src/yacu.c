@@ -28,6 +28,7 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static bool end_of_suites(const YacuSuite suite)
 {
@@ -46,7 +47,8 @@ YacuOptions default_options()
         .fork = true,
         .suiteName = NULL,
         .testName = NULL,
-        .jUnitPath = NULL};
+        .jUnitPath = NULL,
+        .customReport = NULL};
     return options;
 }
 
@@ -221,6 +223,73 @@ static YacuTestRun yacu_run_test(bool forked, YacuTest test)
     return testRun;
 }
 
+typedef struct JUnitReport
+{
+    char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
+    bool firstSuite;
+    FILE *jUnitFile;
+} JUnitReport;
+
+static JUnitReport junit_initialize_report(FILE *jUnitFile)
+{
+    JUnitReport initial = {
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<testsuites>\n",
+        true, jUnitFile};
+    return initial;
+}
+
+static void junit_on_start_suite(YacuReportState state, const char *suiteName)
+{
+    JUnitReport *current = (JUnitReport *)state;
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    if (!current->firstSuite)
+    {
+        buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                      "    <system-out/>\n"
+                      "    <system-err/>\n"
+                      "  </testsuite>\n");
+    }
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "  <testsuite package=\"\" id=\"0\" name=\"%s\"", suiteName);
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  " timestamp=\"%d-%02d-%02dT%02d:%02d:%02d\"",
+                  tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  " hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n");
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "    <properties/>\n");
+    current->firstSuite = false;
+}
+
+static void junit_on_test_start(YacuReportState state, const char *testName)
+{
+    JUnitReport *current = (JUnitReport *)state;
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "    <testcase classname=\"\" name=\"%s\" time=\"0.0\">\n",
+                  testName);
+}
+
+static void junit_on_test_done(YacuReportState state, YacuTestRun testRun)
+{
+    JUnitReport *current = (JUnitReport *)state;
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "    </testcase>\n");
+}
+
+static void junit_flush(YacuReportState state)
+{
+    JUnitReport *current = (JUnitReport *)state;
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "</testsuites>\n");
+    if (current->jUnitFile != NULL)
+    {
+        fprintf(current->jUnitFile, current->jUnitBuffer);
+        fclose(current->jUnitFile);
+    }
+};
+
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
     FILE *jUnitFile = options.jUnitPath == NULL ? NULL : fopen(options.jUnitPath, "w");
@@ -228,25 +297,17 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
     {
         exit(FILE_FAIL);
     }
-    char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE] =
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<testsuites>\n";
+    JUnitReport report = junit_initialize_report(jUnitFile);
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                          "  <testsuite package=\"\" id=\"0\" name=\"%s\" timestamp=\"2022-12-08T13:00:00\" hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n",
-                          suiteIt->name);
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                          "    <properties/>\n", suiteIt->name);
+            junit_on_start_suite(&report, suiteIt->name);
             for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
             {
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
-                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                                  "    <testcase classname=\"\" name=\"%s\" time=\"0.0\">\n",
-                                  testIt->name);
+                    junit_on_test_start(&report, testIt->name);
                     YacuTestRun testRun = yacu_run_test(options.fork, *testIt);
 
                     switch (testRun.result)
@@ -255,11 +316,9 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
                         printf(".");
                         break;
                     case TEST_FAILURE:
-                        buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add failure\n");
                         printf("F");
                         break;
                     case TEST_ERROR:
-                        buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "add error\n");
                         printf("E");
                         break;
                     default:
@@ -269,20 +328,11 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
                     {
                         printf("%s\n", testRun.message);
                     }
-                    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    </testcase>\n");
                 }
             }
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    <system-out/>\n");
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "    <system-err/>\n");
-            buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "  </testsuite>\n");
         }
     }
-    buffer_append(jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE, "</testsuites>\n");
-    if (jUnitFile != NULL)
-    {
-        fprintf(jUnitFile, jUnitBuffer);
-        fclose(jUnitFile);
-    }
+    junit_flush(&report);
 }
 
 YacuReturnCode yacu_execute(YacuOptions options, const YacuSuite *suites)

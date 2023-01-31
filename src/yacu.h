@@ -40,17 +40,6 @@ typedef enum YacuAction
     RUN_TESTS = 2
 } YacuAction;
 
-typedef struct YacuOptions
-{
-    YacuAction action;
-    const char *suiteName;
-    const char *testName;
-    bool fork;
-    const char *jUnitPath;
-} YacuOptions;
-
-YacuOptions default_options();
-
 typedef enum YacuReturnCode
 {
     OK = 0,
@@ -61,6 +50,31 @@ typedef enum YacuReturnCode
     FATAL = 5,
     TEST_ERROR = 6
 } YacuReturnCode;
+
+typedef void *YacuReportState;
+typedef void (*YacuReportOnStartSuite)(YacuReportState state, const char *suiteName);
+typedef void (*YacuReportOnTestStart)(YacuReportState state, const char *testName);
+typedef void (*YacuReportOnTestDone)(YacuReportState state, YacuReturnCode result, const char* message);
+
+typedef struct YacuReport
+{
+    YacuReportState state;
+    YacuReportOnStartSuite onStartSuite;
+    YacuReportOnTestStart onTestStart;
+    YacuReportOnTestDone onTestDone;
+} YacuReport;
+
+typedef struct YacuOptions
+{
+    YacuAction action;
+    const char *suiteName;
+    const char *testName;
+    bool fork;
+    const char *jUnitPath;
+    YacuReport *customReport;
+} YacuOptions;
+
+YacuOptions default_options();
 
 #ifndef YACU_JUNIT_MAX_SIZE
 #define YACU_JUNIT_MAX_SIZE 1000000
@@ -74,7 +88,6 @@ typedef struct YacuTestRun
 {
     YacuReturnCode result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
-
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);
@@ -94,6 +107,7 @@ typedef struct YacuSuite
 {
     const char *name;
     const YacuTest *tests;
+    YacuOptions options;
 } YacuSuite;
 
 #define END_OF_SUITES \
