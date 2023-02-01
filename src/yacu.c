@@ -226,7 +226,8 @@ static YacuTestRun yacu_run_test(bool forked, YacuTest test)
 typedef struct JUnitReport
 {
     char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
-    bool firstSuite;
+    bool suiteStarted;
+    bool testStarted;
     FILE *jUnitFile;
 } JUnitReport;
 
@@ -235,7 +236,7 @@ static JUnitReport junit_initialize_report(FILE *jUnitFile)
     JUnitReport initial = {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<testsuites>\n",
-        true, jUnitFile};
+        false, jUnitFile};
     return initial;
 }
 
@@ -252,7 +253,7 @@ static void junit_on_start_suite(YacuReportState state, const char *suiteName)
     JUnitReport *current = (JUnitReport *)state;
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
-    if (!current->firstSuite)
+    if (current->suiteStarted)
     {
         junit_finalize_suite(current);
     }
@@ -265,7 +266,7 @@ static void junit_on_start_suite(YacuReportState state, const char *suiteName)
                   " hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n");
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "    <properties/>\n");
-    current->firstSuite = false;
+    current->suiteStarted = true;
 }
 
 static void junit_on_test_start(YacuReportState state, const char *testName)
