@@ -72,6 +72,11 @@ typedef struct YacuReport
 
 typedef YacuReport *YacuReportPtr;
 
+#define END_OF_REPORTS                             \
+    {                                            \
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL \
+    }
+
 typedef struct YacuOptions
 {
     YacuAction action;

@@ -143,7 +143,7 @@ void test_junit_creation_fail(YacuTestRun *testRun)
     else
     {
         YacuReturnCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, TEST_ERROR);
     }
 }
 

@@ -32,12 +32,19 @@ SOFTWARE.
 
 static bool end_of_suites(const YacuSuite suite)
 {
-    return suite.name == 0;
+    return suite.name == NULL;
 }
 
 static bool end_of_tests(const YacuTest test)
 {
-    return test.name == 0;
+    return test.name == NULL;
+}
+
+static bool end_of_reports(YacuReport *report)
+{
+    return report == NULL
+               ? false
+               : report->on_suite_finished == NULL && report->on_suite_started == NULL && report->on_suites_finished == NULL && report->on_suites_started == NULL && report->on_test_finished == NULL && report->on_test_started == NULL && report->state == NULL;
 }
 
 YacuOptions default_options()
@@ -57,7 +64,7 @@ static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format
     size_t bufferLength = strlen(buffer);
     va_list args;
     va_start(args, format);
-    vsnprintf(buffer + bufferLength, YACU_JUNIT_MAX_SIZE - bufferLength, format, args);
+    vsnprintf(buffer + bufferLength, bufferMaxSize - bufferLength, format, args);
     va_end(args);
 }
 
@@ -285,17 +292,32 @@ static void stdout_on_start_suites(YacuReportState state)
 
 static void stdout_on_start_suite(YacuReportState state, const char *suiteName)
 {
-    printf("%s\n", suiteName);
+    printf("#%s\n", suiteName);
 }
 
 static void stdout_on_test_start(YacuReportState state, const char *testName)
 {
-    printf("%s\n", testName);
+    printf("  ##%s\n", testName);
 }
 
 static void stdout_on_test_finished(YacuReportState state, YacuReturnCode result, const char *message)
 {
-    printf("%d - %s\n", result, message);
+    switch (result)
+    {
+    case OK:
+        printf("    OK\n");
+        break;
+    case TEST_ERROR:
+        printf("    ERROR\n");
+        break;
+    case TEST_FAILURE:
+        printf("    FAILURE\n");
+        break;
+    }
+    if (strlen(message) > 0)
+    {
+        printf("    %s\n", message);
+    }
 }
 
 static void stdout_on_suite_finished(YacuReportState state)
@@ -308,54 +330,78 @@ static void stdout_on_suites_finished(YacuReportState state)
 
 static void on_suites_started(YacuReportPtr *reports)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
         report->on_suites_started(report->state);
     }
 }
 
 static void on_suite_started(YacuReportPtr *reports, const char *suiteName)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
         report->on_suite_started(report->state, suiteName);
     }
 }
 
 static void on_test_started(YacuReportPtr *reports, const char *testName)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
-        report->on_suite_started(report->state, testName);
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
+        report->on_test_started(report->state, testName);
     }
 }
 
 void on_test_finished(YacuReportPtr *reports, YacuReturnCode result, const char *message)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
         report->on_test_finished(report->state, result, message);
     }
 }
 
 void on_suite_finished(YacuReportPtr *reports)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
         report->on_suite_finished(report->state);
     }
 }
 
 void on_suites_finished(YacuReportPtr *reports)
 {
-    for (YacuReportPtr *reportPtr = reports; reportPtr != NULL; reportPtr++)
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
-        YacuReport *report = *reportPtr;
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
         report->on_suites_finished(report->state);
     }
 }
@@ -388,8 +434,10 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
         NULL,
         stdout_on_start_suites, stdout_on_start_suite, stdout_on_test_start,
         stdout_on_test_finished, stdout_on_suite_finished, stdout_on_suites_finished};
-    YacuReportPtr reports[] = {&jUnitReport, options.customReport, NULL};
+    YacuReport endOfReports = END_OF_REPORTS;
+    YacuReportPtr reports[] = {&jUnitReport, &stdoutReport, options.customReport, &endOfReports};
 
+    on_suites_started(reports);
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
