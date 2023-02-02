@@ -52,17 +52,25 @@ typedef enum YacuReturnCode
 } YacuReturnCode;
 
 typedef void *YacuReportState;
-typedef void (*YacuReportOnStartSuite)(YacuReportState state, const char *suiteName);
-typedef void (*YacuReportOnTestStart)(YacuReportState state, const char *testName);
-typedef void (*YacuReportOnTestDone)(YacuReportState state, YacuReturnCode result, const char* message);
+typedef void (*YacuReportOnSuitesStarted)(YacuReportState state);
+typedef void (*YacuReportOnSuiteStarted)(YacuReportState state, const char *suiteName);
+typedef void (*YacuReportOnTestStarted)(YacuReportState state, const char *testName);
+typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuReturnCode result, const char *message);
+typedef void (*YacuReportOnSuiteFinished)(YacuReportState state);
+typedef void (*YacuReportOnSuitesFinished)(YacuReportState state);
 
 typedef struct YacuReport
 {
     YacuReportState state;
-    YacuReportOnStartSuite onStartSuite;
-    YacuReportOnTestStart onTestStart;
-    YacuReportOnTestDone onTestDone;
+    YacuReportOnSuitesStarted on_suites_started;
+    YacuReportOnSuiteStarted on_suite_started;
+    YacuReportOnTestStarted on_test_started;
+    YacuReportOnTestFinished on_test_finished;
+    YacuReportOnSuiteFinished on_suite_finished;
+    YacuReportOnSuitesFinished on_suites_finished;
 } YacuReport;
+
+typedef YacuReport *YacuReportPtr;
 
 typedef struct YacuOptions
 {
@@ -88,6 +96,8 @@ typedef struct YacuTestRun
 {
     YacuReturnCode result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
+    bool forked;
+    YacuReportPtr reports[];
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);
@@ -125,10 +135,10 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
     {                                                                                                \
         if (!(a cmp b))                                                                              \
         {                                                                                            \
+            testRun->result = TEST_FAILURE;                                                          \
             test_run_message_append(testRun,                                                         \
                                     "Condition %s %s %s (" afmt " %s " bfmt ") failed at (%s:%d)\n", \
                                     #a, #cmp, #b, a, #cmp, b, __FILE__, __LINE__);                   \
-            testRun->result = TEST_FAILURE;                                                          \
             exit(TEST_FAILURE);                                                                      \
         }                                                                                            \
     }
