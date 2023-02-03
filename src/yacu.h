@@ -40,22 +40,22 @@ typedef enum YacuAction
     RUN_TESTS = 2
 } YacuAction;
 
-typedef enum YacuReturnCode
+typedef enum YacuStatus
 {
     OK = 0,
-    WRONG_ARGS = 1,
-    TEST_FAILURE = 2,
+    TEST_FAILURE = 1,
+    WRONG_ARGS = 2,
     FORK_FAIL = 3,
     FILE_FAIL = 4,
-    FATAL = 5,
-    TEST_ERROR = 6
-} YacuReturnCode;
+    TEST_ERROR = 5,
+    FATAL = 99,
+} YacuStatus;
 
 typedef void *YacuReportState;
 typedef void (*YacuReportOnSuitesStarted)(YacuReportState state);
 typedef void (*YacuReportOnSuiteStarted)(YacuReportState state, const char *suiteName);
 typedef void (*YacuReportOnTestStarted)(YacuReportState state, const char *testName);
-typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuReturnCode result, const char *message);
+typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuStatus result, const char *message);
 typedef void (*YacuReportOnSuiteFinished)(YacuReportState state);
 typedef void (*YacuReportOnSuitesFinished)(YacuReportState state);
 
@@ -72,7 +72,7 @@ typedef struct YacuReport
 
 typedef YacuReport *YacuReportPtr;
 
-#define END_OF_REPORTS                             \
+#define END_OF_REPORTS                           \
     {                                            \
         NULL, NULL, NULL, NULL, NULL, NULL, NULL \
     }
@@ -99,10 +99,10 @@ YacuOptions default_options();
 
 typedef struct YacuTestRun
 {
-    YacuReturnCode result;
+    YacuStatus result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
     bool forked;
-    YacuReportPtr reports[];
+    YacuReportPtr *reports;
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);
@@ -132,7 +132,7 @@ typedef struct YacuSuite
 
 YacuOptions yacu_process_args(int argc, char const *argv[]);
 
-YacuReturnCode yacu_execute(YacuOptions options, const YacuSuite *suites);
+YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 
@@ -193,6 +193,6 @@ YacuProcessHandle yacu_fork();
 
 bool is_forked(YacuProcessHandle pid);
 
-YacuReturnCode wait_for_forked(YacuProcessHandle forkedId);
+YacuStatus wait_for_forked(YacuProcessHandle forkedId);
 
 #endif // YACU_H

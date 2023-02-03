@@ -81,7 +81,7 @@ void test_fork(YacuTestRun *testRun)
     }
     else
     {
-        YacuReturnCode returnCode = wait_for_forked(pid);
+        YacuStatus returnCode = wait_for_forked(pid);
         YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
     }
 }
@@ -96,7 +96,7 @@ void test_wrong_args(YacuTestRun *testRun)
     }
     else
     {
-        YacuReturnCode returnCode = wait_for_forked(pid);
+        YacuStatus returnCode = wait_for_forked(pid);
         YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
@@ -111,7 +111,7 @@ void test_missing_test_args(YacuTestRun *testRun)
     }
     else
     {
-        YacuReturnCode returnCode = wait_for_forked(pid);
+        YacuStatus returnCode = wait_for_forked(pid);
         YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
@@ -126,7 +126,7 @@ void test_missing_junit_args(YacuTestRun *testRun)
     }
     else
     {
-        YacuReturnCode returnCode = wait_for_forked(pid);
+        YacuStatus returnCode = wait_for_forked(pid);
         YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
     }
 }
@@ -142,8 +142,8 @@ void test_junit_creation_fail(YacuTestRun *testRun)
     }
     else
     {
-        YacuReturnCode returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, TEST_ERROR);
+        YacuStatus returnCode = wait_for_forked(pid);
+        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
     }
 }
 
@@ -151,7 +151,7 @@ void test_junit_creation(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--junit", "success.xml", "--no-fork"};
     YacuOptions options = yacu_process_args(3, argv);
-    YacuReturnCode returnCode = yacu_execute(options, suites4Others);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
     YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
