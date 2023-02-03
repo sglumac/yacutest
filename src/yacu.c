@@ -231,7 +231,6 @@ typedef struct JUnitReport
 {
     char jUnitBuffer[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
     const char *jUnitPath;
-    const char *suiteName;
 } JUnitReport;
 
 static void junit_on_start_suites(YacuReportState state)
@@ -244,7 +243,7 @@ static void junit_on_start_suite(YacuReportState state, const char *suiteName)
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                  "  <testsuite package=\"\" id=\"0\" name=\"\"");
+                  "  <testsuite package=\"\" id=\"0\" name=\"%s\"", suiteName);
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   " timestamp=\"%d-%02d-%02dT%02d:%02d:%02d\"",
                   tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -252,15 +251,14 @@ static void junit_on_start_suite(YacuReportState state, const char *suiteName)
                   " hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n");
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "    <properties/>\n");
-    current->suiteName = suiteName;
 }
 
 static void junit_on_test_start(YacuReportState state, const char *testName)
 {
     JUnitReport *current = (JUnitReport *)state;
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                  "    <testcase classname=\"%s\" name=\"%s\" time=\"0.0\">\n",
-                  current->suiteName, testName);
+                  "    <testcase classname=\"\" name=\"%s\" time=\"0.0\">\n",
+                  testName);
 }
 
 static void junit_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
@@ -277,7 +275,6 @@ static void junit_on_suite_finished(YacuReportState state)
                   "    <system-out/>\n"
                   "    <system-err/>\n"
                   "  </testsuite>\n");
-    current->suiteName = NULL;
 }
 
 static void junit_on_suites_finished(YacuReportState state)
@@ -437,8 +434,7 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
     JUnitReport jUnitInitial = {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<testsuites>\n",
-        options.jUnitPath,
-        NULL};
+        options.jUnitPath};
     YacuReport jUnitReport = {
         &jUnitInitial,
         junit_on_start_suites, junit_on_start_suite, junit_on_test_start,
