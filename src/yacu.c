@@ -163,6 +163,8 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
 
 YacuProcessHandle yacu_fork()
 {
+    fflush(stdout);
+    fflush(stderr);
 #ifdef FORK_AVAILABLE
     pid_t pid = fork();
     if (pid < 0)
@@ -191,6 +193,22 @@ YacuStatus wait_for_forked(YacuProcessHandle forkedId)
     waitpid(forkedId, &status, 0);
     if (WIFEXITED(status))
     {
+        printf("exited, status=%d\n", WEXITSTATUS(status));
+    }
+    else if (WIFSIGNALED(status))
+    {
+        printf("killed by signal %d, status=%d\n", WTERMSIG(status), WEXITSTATUS(status));
+    }
+    else if (WIFSTOPPED(status))
+    {
+        printf("stopped by signal %d\n", WSTOPSIG(status));
+    }
+    else if (WIFCONTINUED(status))
+    {
+        printf("continued\n");
+    }
+    if (WIFEXITED(status))
+    {
         return WEXITSTATUS(status);
     }
     else
@@ -204,7 +222,7 @@ YacuStatus wait_for_forked(YacuProcessHandle forkedId)
 
 static YacuTestRun yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports)
 {
-    YacuTestRun testRun = {OK, "", forked, reports};
+    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports};
     bool testPassed = false;
     YacuStatus returnCode;
     if (forked)
@@ -429,6 +447,8 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...)
     }
 }
 
+YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {
     JUnitReport jUnitInitial = {
@@ -443,8 +463,8 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
         NULL,
         stdout_on_start_suites, stdout_on_start_suite, stdout_on_test_start,
         stdout_on_test_finished, stdout_on_suite_finished, stdout_on_suites_finished};
-    YacuReport endOfReports = END_OF_REPORTS;
-    YacuReportPtr reports[] = {&jUnitReport, &stdoutReport, options.customReport, &endOfReports};
+
+    YacuReportPtr reports[] = {&jUnitReport, &stdoutReport, options.customReport, &END_OF_REPORTS};
 
     on_suites_started(reports);
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)

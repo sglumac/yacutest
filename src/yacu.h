@@ -72,10 +72,7 @@ typedef struct YacuReport
 
 typedef YacuReport *YacuReportPtr;
 
-#define END_OF_REPORTS                           \
-    {                                            \
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL \
-    }
+extern YacuReport END_OF_REPORTS;
 
 typedef struct YacuOptions
 {
@@ -140,8 +137,8 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
     {                                                                                                \
         if (!(a cmp b))                                                                              \
         {                                                                                            \
-            testRun->result = TEST_FAILURE;                                                          \
-            test_run_message_append(testRun,                                                         \
+            (testRun)->result = TEST_FAILURE;                                                        \
+            test_run_message_append((testRun),                                                       \
                                     "Condition %s %s %s (" afmt " %s " bfmt ") failed at (%s:%d)\n", \
                                     #a, #cmp, #b, a, #cmp, b, __FILE__, __LINE__);                   \
             exit(TEST_FAILURE);                                                                      \
@@ -170,8 +167,8 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
     {                                                                                                                    \
         if (!(YACU_ABS(a - b) < tol))                                                                                    \
         {                                                                                                                \
-            testRun->result = TEST_FAILURE;                                                                              \
-            test_run_message_append(testRun,                                                                             \
+            (testRun)->result = TEST_FAILURE;                                                                            \
+            test_run_message_append((testRun),                                                                           \
                                     "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
                                     #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
             exit(TEST_FAILURE);                                                                                          \
