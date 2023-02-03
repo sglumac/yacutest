@@ -170,10 +170,10 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
     {                                                                                                                    \
         if (!(YACU_ABS(a - b) < tol))                                                                                    \
         {                                                                                                                \
+            testRun->result = TEST_FAILURE;                                                                              \
             test_run_message_append(testRun,                                                                             \
                                     "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
                                     #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
-            testRun->result = TEST_FAILURE;                                                                              \
             exit(TEST_FAILURE);                                                                                          \
         }                                                                                                                \
     }
