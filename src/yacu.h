@@ -32,6 +32,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 typedef enum YacuAction
 {
@@ -133,17 +134,26 @@ YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 
-#define YACU_ASSERT_CMP(testRun, afmt, bfmt, a, cmp, b)                                              \
-    {                                                                                                \
-        if (!(a cmp b))                                                                              \
-        {                                                                                            \
-            (testRun)->result = TEST_FAILURE;                                                        \
-            test_run_message_append((testRun),                                                       \
-                                    "Condition %s %s %s (" afmt " %s " bfmt ") failed at (%s:%d)\n", \
-                                    #a, #cmp, #b, a, #cmp, b, __FILE__, __LINE__);                   \
-            exit(TEST_FAILURE);                                                                      \
-        }                                                                                            \
+#define YACU_ASSERT(testRun, condition, label, fmt, ...)                      \
+    {                                                                         \
+        if (!(condition))                                                     \
+        {                                                                     \
+            testRun->result = TEST_FAILURE;                                   \
+            test_run_message_append(testRun,                                  \
+                                    "%s:%d - Assertion %s (" fmt ") failed!", \
+                                    __FILE__, __LINE__, label, __VA_ARGS__);  \
+            exit(TEST_FAILURE);                                               \
+        }                                                                     \
     }
+
+#define YACU_ASSERT_EQ_STR(testRun, left, right) \
+    YACU_ASSERT(testRun, strcmp(left, right) == 0, #left " == " #right, "\"%s\" == \"%s\"", left, right)
+
+#define YACU_ASSERT_IN_STR(testRun, left, right) \
+    YACU_ASSERT(testRun, strstr(right, left) != NULL, #left " IN " #right, "\"%s\" IN \"%s\"", left, right)
+
+#define YACU_ASSERT_CMP(testRun, afmt, bfmt, left, cmp, right) \
+    YACU_ASSERT(testRun, left cmp right, #left " " #cmp " " #right, afmt " " #cmp " " bfmt, left, right)
 
 #define YACU_ASSERT_CMP_INT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
 
