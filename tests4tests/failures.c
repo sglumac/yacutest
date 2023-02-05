@@ -33,9 +33,14 @@ static void file_report_on_suite_finished(YacuReportState state) {}
 static void file_report_on_suites_finished(YacuReportState state) {}
 
 typedef void ForkedAction(YacuTestRun *forkedTestRun);
-typedef void MainAction(YacuTestRun *testRun, YacuStatus forkReturnCode, const char *forkMessage);
 
-void test_using_fork(YacuTestRun *testRun, const char *reportPath, MainAction mainAction, ForkedAction forkedAction)
+static void main_action(YacuTestRun *testRun, YacuStatus forkReturnCode, const char *forkMessage, const char* expectedMessage)
+{
+    YACU_ASSERT_EQ_INT(testRun, forkReturnCode, TEST_FAILURE);
+    YACU_ASSERT_IN_STR(testRun, expectedMessage, forkMessage);
+}
+
+void test_using_fork(YacuTestRun *testRun, const char *reportPath, const char* expectedMessage, ForkedAction forkedAction)
 {
     FileReport fileReportState = {.filePath = reportPath};
     YacuReport fileReport = {
@@ -55,7 +60,7 @@ void test_using_fork(YacuTestRun *testRun, const char *reportPath, MainAction ma
     FILE *reportFile = fopen(reportPath, "r");
     fgets(forkMessage, YACU_TEST_RUN_MESSAGE_MAX_SIZE, reportFile);
     fclose(reportFile);
-    mainAction(testRun, forkReturnCode, forkMessage);
+    main_action(testRun, forkReturnCode, forkMessage, expectedMessage);
 }
 
 void forked_assert_failed_cmp_int(YacuTestRun* forkedTestRun)
@@ -65,16 +70,10 @@ void forked_assert_failed_cmp_int(YacuTestRun* forkedTestRun)
     YACU_ASSERT_LT_INT(forkedTestRun, small, -2);
 }
 
-void main_assert_failed_cmp_int(YacuTestRun *testRun, YacuStatus forkReturnCode, const char *forkMessage)
-{
-    YACU_ASSERT_EQ_INT(testRun, forkReturnCode, TEST_FAILURE);
-    YACU_ASSERT_IN_STR(testRun, "failures.c:65 - Assertion small < -2 (-1 < -2) failed!", forkMessage);
-}
-
 void test_assert_failed_cmp_int(YacuTestRun *testRun)
 {
     const char reportPath[] = "failedCmpIntTest.log";
-    test_using_fork(testRun, reportPath, main_assert_failed_cmp_int, forked_assert_failed_cmp_int);
+    test_using_fork(testRun, reportPath, "failures.c:70 - Assertion small < -2 (-1 < -2) failed!", forked_assert_failed_cmp_int);
 }
 
 YacuTest assertionFailuresTests[] = {
