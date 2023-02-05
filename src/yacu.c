@@ -394,7 +394,7 @@ static void on_test_started(YacuReportPtr *reports, const char *testName)
     }
 }
 
-void on_test_finished(YacuReportPtr *reports, YacuStatus result, const char *message)
+static void on_test_finished(YacuReportPtr *reports, YacuStatus result, const char *message)
 {
     for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
@@ -407,7 +407,7 @@ void on_test_finished(YacuReportPtr *reports, YacuStatus result, const char *mes
     }
 }
 
-void on_suite_finished(YacuReportPtr *reports)
+static void on_suite_finished(YacuReportPtr *reports)
 {
     for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
@@ -420,7 +420,7 @@ void on_suite_finished(YacuReportPtr *reports)
     }
 }
 
-void on_suites_finished(YacuReportPtr *reports)
+static void on_suites_finished(YacuReportPtr *reports)
 {
     for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
@@ -433,21 +433,27 @@ void on_suites_finished(YacuReportPtr *reports)
     }
 }
 
-void test_run_message_append(YacuTestRun *testRun, const char *format, ...)
+YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+
+void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 {
-    va_list args;
-    va_start(args, format);
-    vbuffer_append(testRun->message, YACU_TEST_RUN_MESSAGE_MAX_SIZE, format, args);
-    va_end(args);
-    if (!testRun->forked && testRun->result == TEST_FAILURE)
+    if (!(condition))
     {
-        on_test_finished(testRun->reports, testRun->result, testRun->message);
-        on_suite_finished(testRun->reports);
-        on_suite_finished(testRun->reports);
+        testRun->result = TEST_FAILURE;
+
+        va_list args;
+        va_start(args, fmt);
+        vbuffer_append(testRun->message, YACU_TEST_RUN_MESSAGE_MAX_SIZE, fmt, args);
+        va_end(args);
+        if (!testRun->forked && testRun->result == TEST_FAILURE)
+        {
+            on_test_finished(testRun->reports, testRun->result, testRun->message);
+            on_suite_finished(testRun->reports);
+            on_suite_finished(testRun->reports);
+        }
+        exit(TEST_FAILURE);
     }
 }
-
-YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 static void run_tests(YacuOptions options, const YacuSuite *suites)
 {

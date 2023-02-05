@@ -27,7 +27,7 @@ void test_assert_eq_dbl(YacuTestRun *testRun)
 {
     double x = 1.1;
 
-    YACU_ASSERT_APPROX_EQ_DBL(testRun, x, 1.2, 0.2)
+    YACU_ASSERT_APPROX_EQ_DBL(testRun, x, 1.2, 0.2);
 }
 
 YacuTest assertionTests[] = {

@@ -134,17 +134,10 @@ YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 
-#define YACU_ASSERT(testRun, condition, label, fmt, ...)                      \
-    {                                                                         \
-        if (!(condition))                                                     \
-        {                                                                     \
-            testRun->result = TEST_FAILURE;                                   \
-            test_run_message_append(testRun,                                  \
-                                    "%s:%d - Assertion %s (" fmt ") failed!", \
-                                    __FILE__, __LINE__, label, __VA_ARGS__);  \
-            exit(TEST_FAILURE);                                               \
-        }                                                                     \
-    }
+void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
+
+#define YACU_ASSERT(testRun, condition, label, fmt, ...) \
+    yacu_assert(testRun, condition, "%s:%d - Assertion %s (" fmt ") failed!", __FILE__, __LINE__, label, __VA_ARGS__)
 
 #define YACU_ASSERT_EQ_STR(testRun, left, right) \
     YACU_ASSERT(testRun, strcmp(left, right) == 0, #left " == " #right, "\"%s\" == \"%s\"", left, right)
@@ -152,40 +145,30 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 #define YACU_ASSERT_IN_STR(testRun, left, right) \
     YACU_ASSERT(testRun, strstr(right, left) != NULL, #left " IN " #right, "\"%s\" IN \"%s\"", left, right)
 
-#define YACU_ASSERT_CMP(testRun, afmt, bfmt, left, cmp, right) \
-    YACU_ASSERT(testRun, left cmp right, #left " " #cmp " " #right, afmt " " #cmp " " bfmt, left, right)
+#define YACU_ASSERT_CMP(testRun, leftfmt, rightfmt, left, cmp, right) \
+    YACU_ASSERT(testRun, left cmp right, #left " " #cmp " " #right, leftfmt " " #cmp " " rightfmt, left, right)
 
-#define YACU_ASSERT_CMP_INT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%d", "%d", a, cmp, b)
+#define YACU_ASSERT_CMP_INT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%d", "%d", left, cmp, right)
 
-#define YACU_ASSERT_LT_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, <, b)
-#define YACU_ASSERT_LE_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, <=, b)
-#define YACU_ASSERT_EQ_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, ==, b)
-#define YACU_ASSERT_GT_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, >, b)
-#define YACU_ASSERT_GE_INT(testRun, a, b) YACU_ASSERT_CMP_INT(testRun, a, >=, b)
+#define YACU_ASSERT_LT_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, <, right)
+#define YACU_ASSERT_LE_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, <=, right)
+#define YACU_ASSERT_EQ_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, ==, right)
+#define YACU_ASSERT_GT_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, >, right)
+#define YACU_ASSERT_GE_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, >=, right)
 
-#define YACU_ASSERT_CMP_UINT(testRun, a, cmp, b) YACU_ASSERT_CMP(testRun, "%u", "%u", a, cmp, b)
+#define YACU_ASSERT_CMP_UINT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%u", "%u", left, cmp, right)
 
-#define YACU_ASSERT_LT_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, <, b)
-#define YACU_ASSERT_LE_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, <=, b)
-#define YACU_ASSERT_EQ_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, ==, b)
-#define YACU_ASSERT_GT_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, >, b)
-#define YACU_ASSERT_GE_UINT(testRun, a, b) YACU_ASSERT_CMP_UINT(testRun, a, >=, b)
+#define YACU_ASSERT_LT_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, <, right)
+#define YACU_ASSERT_LE_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, <=, right)
+#define YACU_ASSERT_EQ_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, ==, right)
+#define YACU_ASSERT_GT_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >, right)
+#define YACU_ASSERT_GE_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >=, right)
 
 #define YACU_ABS(x) (x > 0 ? x : -x)
 
-#define YACU_ASSERT_APPROX_EQ(testRun, afmt, bfmt, tolfmt, a, b, tol)                                                    \
-    {                                                                                                                    \
-        if (!(YACU_ABS(a - b) < tol))                                                                                    \
-        {                                                                                                                \
-            (testRun)->result = TEST_FAILURE;                                                                            \
-            test_run_message_append((testRun),                                                                           \
-                                    "Condition |%s - %s| < %s (|" afmt " - " bfmt "| < " tolfmt ") failed at (%s:%d)\n", \
-                                    #a, #b, #tol, a, b, tol, __FILE__, __LINE__);                                        \
-            exit(TEST_FAILURE);                                                                                          \
-        }                                                                                                                \
-    }
+#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, a, b, tol) \
 
-#define YACU_ASSERT_APPROX_EQ_DBL(testRun, a, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
+#define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
 
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
