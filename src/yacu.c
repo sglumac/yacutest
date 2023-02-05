@@ -449,7 +449,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
         {
             on_test_finished(testRun->reports, testRun->result, testRun->message);
             on_suite_finished(testRun->reports);
-            on_suite_finished(testRun->reports);
+            on_suites_finished(testRun->reports);
         }
         exit(TEST_FAILURE);
     }
