@@ -5,6 +5,6 @@
 
 typedef void ForkedAction(YacuTestRun *forkedTestRun);
 
-void forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char* failureMessage);
+YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char* failureMessage);
 
 #endif // COMMON_H

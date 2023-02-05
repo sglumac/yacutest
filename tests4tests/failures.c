@@ -1,6 +1,6 @@
 #include <yacu.h>
 #include <failures.h>
-#include <stdlib.h>
+#include <common.h>
 
 void forked_assert_failed_cmp_int(YacuTestRun *forkedTestRun)
 {

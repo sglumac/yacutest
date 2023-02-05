@@ -19,7 +19,7 @@ static void file_report_on_suite_finished(YacuReportState state) {}
 
 static void file_report_on_suites_finished(YacuReportState state) {}
 
-void forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char* failureMessage)
+YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char* failureMessage)
 {
     FileReport fileReportState = {.filePath = reportPath};
     YacuReport fileReport = {
