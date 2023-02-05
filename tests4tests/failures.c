@@ -13,10 +13,6 @@ static void file_report_on_test_finished(YacuReportState state, YacuStatus resul
 
     switch (result)
     {
-    case OK:
-        break;
-    case TEST_ERROR:
-        break;
     case TEST_FAILURE:
     {
         FILE *reportFile = fopen(fileReport->filePath, "w");
