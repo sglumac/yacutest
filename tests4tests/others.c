@@ -1,7 +1,8 @@
 #include <yacu.h>
 #include <others.h>
 
-void test_simple_eq_int(YacuTestRun *testRun) {
+void test_simple_eq_int(YacuTestRun *testRun)
+{
     int x = 1;
     YACU_ASSERT_EQ_INT(testRun, x, 1);
 }
@@ -18,31 +19,31 @@ void test_list_suites(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--list", "--no-fork"};
     YacuOptions options = yacu_process_args(3, argv);
-    int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 void test_help(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--help"};
     YacuOptions options = yacu_process_args(2, argv);
-    int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 void test_run_single_test(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest", "--no-fork"};
     YacuOptions options = yacu_process_args(5, argv);
-    int returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, 0);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
+    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 void test_run_single_suite(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--suite", "ForOthers", "--no-fork"};
     YacuOptions options = yacu_process_args(4, argv);
-    int returnCode = yacu_execute(options, suites4Others);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
     YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
@@ -133,7 +134,7 @@ void test_run_single_suite_with_fork(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--suite", "ForOthers"};
     YacuOptions options = yacu_process_args(3, argv);
-    int returnCode = yacu_execute(options, suites4Others);
+    YacuStatus returnCode = yacu_execute(options, suites4Others);
     YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 

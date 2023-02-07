@@ -193,23 +193,24 @@ YacuStatus wait_for_forked(YacuProcessHandle forkedId)
     waitpid(forkedId, &status, 0);
     if (WIFEXITED(status))
     {
-        printf("exited, status=%d\n", WEXITSTATUS(status));
+        YacuStatus testStatus = WEXITSTATUS(status);
+        printf("exited, status=%d\n", testStatus);
+        return testStatus;
     }
     else if (WIFSIGNALED(status))
     {
         printf("killed by signal %d, status=%d\n", WTERMSIG(status), WEXITSTATUS(status));
+        return TEST_ERROR;
     }
     else if (WIFSTOPPED(status))
     {
         printf("stopped by signal %d\n", WSTOPSIG(status));
+        return TEST_ERROR;
     }
     else if (WIFCONTINUED(status))
     {
         printf("continued\n");
-    }
-    if (WIFEXITED(status))
-    {
-        return WEXITSTATUS(status);
+        return TEST_ERROR;
     }
     else
     {
@@ -218,31 +219,6 @@ YacuStatus wait_for_forked(YacuProcessHandle forkedId)
 #else
     return OK;
 #endif
-}
-
-static YacuTestRun yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports)
-{
-    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports};
-    bool testPassed = false;
-    YacuStatus returnCode;
-    if (forked)
-    {
-        YacuProcessHandle pid = yacu_fork();
-        if (is_forked(pid))
-        {
-            test.fcn(&testRun);
-            exit(OK);
-        }
-        else
-        {
-            returnCode = wait_for_forked(pid);
-        }
-    }
-    else
-    {
-        test.fcn(&testRun);
-    }
-    return testRun;
 }
 
 typedef struct JUnitReport
@@ -435,6 +411,34 @@ static void on_suites_finished(YacuReportPtr *reports)
 
 YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
+static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports)
+{
+    YacuTestRun testRun = {.result = OK, .message = "", .forked = false, .reports = reports};
+    test.fcn(&testRun);
+    on_test_finished(reports, testRun.result, testRun.message);
+    return testRun.result;
+}
+
+static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports)
+{
+    bool testPassed = false;
+    YacuStatus returnCode;
+    YacuProcessHandle pid = yacu_fork();
+    if (is_forked(pid))
+    {
+        exit(yacu_run_test(true, test, reports));
+    }
+    else
+    {
+        returnCode = wait_for_forked(pid);
+    }
+    if (returnCode != OK)
+    {
+        on_test_finished(reports, returnCode, "Something failed!");
+    }
+    return returnCode;
+}
+
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 {
     if (!(condition))
@@ -455,8 +459,9 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
     }
 }
 
-static void run_tests(YacuOptions options, const YacuSuite *suites)
+static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
 {
+    YacuStatus runStatus = OK;
     JUnitReport jUnitInitial = {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<testsuites>\n",
@@ -483,14 +488,20 @@ static void run_tests(YacuOptions options, const YacuSuite *suites)
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
                     on_test_started(reports, testIt->name);
-                    YacuTestRun testRun = yacu_run_test(options.fork, *testIt, reports);
-                    on_test_finished(reports, testRun.result, testRun.message);
+                    YacuStatus testStatus = options.fork
+                                                ? yacu_run_forked_test(*testIt, reports)
+                                                : yacu_run_test(false, *testIt, reports);
+                    if (testStatus == TEST_ERROR || (testStatus == TEST_FAILURE && runStatus != TEST_ERROR))
+                    {
+                        runStatus = testStatus;
+                    }
                 }
             }
         }
         on_suite_finished(reports);
     }
     on_suites_finished(reports);
+    return runStatus;
 }
 
 YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
@@ -499,15 +510,13 @@ YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
     {
     case LIST:
         list_suites(stdout, suites);
-        break;
+        return OK;
     case RUN_TESTS:
-        run_tests(options, suites);
-        break;
+        return run_tests(options, suites);
     case HELP:
         printf("%s\n", helpString);
-        break;
+        return OK;
     default:
         return FATAL;
     }
-    return OK;
 }
