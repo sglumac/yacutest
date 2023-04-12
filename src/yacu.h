@@ -120,7 +120,6 @@ typedef struct YacuSuite
 {
     const char *name;
     const YacuTest *tests;
-    YacuOptions options;
 } YacuSuite;
 
 #define END_OF_SUITES \
@@ -166,7 +165,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 
 #define YACU_ABS(x) (x > 0 ? x : -x)
 
-#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, a, b, tol) \
+#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, a, b, tol)
 
 #define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
 
