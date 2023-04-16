@@ -163,11 +163,17 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 #define YACU_ASSERT_GT_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >, right)
 #define YACU_ASSERT_GE_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >=, right)
 
-#define YACU_ABS(x) (x > 0 ? x : -x)
+#define YACU_ABS(x) ((x) > 0 ? (x) : -(x))
 
-#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, a, b, tol)
+#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, left, right, tol) \
+    YACU_ASSERT(testRun,                                                            \
+                YACU_ABS((left) - (right)) < (tol),                                 \
+                "|" #left " - " #right "| < " #tol,                                 \
+                "|" leftfmt " - " rightfmt "| < " tolfmt,                           \
+                left, right, tol)
 
-#define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, b, tol) YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", a, b, tol)
+#define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, right, tol) \
+    YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", left, right, tol)
 
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
