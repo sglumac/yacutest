@@ -138,6 +138,9 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 #define YACU_ASSERT(testRun, condition, label, fmt, ...) \
     yacu_assert(testRun, condition, "%s:%d - Assertion %s (" fmt ") failed!", __FILE__, __LINE__, label, __VA_ARGS__)
 
+#define YACU_ASSERT_TRUE(testRun, condition) \
+    YACU_ASSERT(testRun, condition, #condition, "%d", condition)
+
 #define YACU_ASSERT_EQ_STR(testRun, left, right) \
     YACU_ASSERT(testRun, strcmp(left, right) == 0, #left " == " #right, "\"%s\" == \"%s\"", left, right)
 

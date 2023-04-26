@@ -30,8 +30,16 @@ void test_assert_eq_dbl(YacuTestRun *testRun)
     YACU_ASSERT_APPROX_EQ_DBL(testRun, x, 1.2, 0.2);
 }
 
+void test_assert_true(YacuTestRun *testRun)
+{
+    int x = 1;
+
+    YACU_ASSERT_TRUE(testRun, x == 1);
+}
+
 YacuTest assertionTests[] = {
     {"cmpIntTest", &test_assert_cmp_int},
     {"cmpUIntTest", &test_assert_cmp_uint},
     {"eqDblTest", &test_assert_eq_dbl},
+    {"trueTest", &test_assert_true},
     END_OF_TESTS};
