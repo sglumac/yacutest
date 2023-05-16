@@ -1,4 +1,5 @@
 #include <common.h>
+#define UNUSED(x) (void)(x)
 
 typedef struct FileReport
 {
@@ -7,6 +8,7 @@ typedef struct FileReport
 
 static void file_report_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
 {
+    UNUSED(result);
     FileReport *fileReport = state;
 
     FILE *reportFile = fopen(fileReport->filePath, "w");
@@ -15,12 +17,13 @@ static void file_report_on_test_finished(YacuReportState state, YacuStatus resul
     fclose(reportFile);
 }
 
-static void file_report_on_suite_finished(YacuReportState state) {}
+static void file_report_on_suite_finished(YacuReportState state) {UNUSED(state);}
 
-static void file_report_on_suites_finished(YacuReportState state) {}
+static void file_report_on_suites_finished(YacuReportState state) {UNUSED(state);}
 
 YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char* failureMessage)
 {
+    UNUSED(testRun);
     FileReport fileReportState = {.filePath = reportPath};
     YacuReport fileReport = {
         .state = &fileReportState,

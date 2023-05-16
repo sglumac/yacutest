@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(yacutest)
 
+if(MSVC)
+  add_compile_options(/W4 /WX)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 if (COVERAGE STREQUAL "True")

@@ -114,7 +114,6 @@ static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuO
     {
         options->testName = argv[i + 2];
     }
-    bool testFound = false;
 }
 
 YacuOptions yacu_process_args(int argc, char const *argv[])
@@ -227,8 +226,10 @@ typedef struct JUnitReport
     const char *jUnitPath;
 } JUnitReport;
 
+#define UNUSED(x) (void)(x)
 static void junit_on_start_suites(YacuReportState state)
 {
+    UNUSED(state);
 }
 
 static void junit_on_start_suite(YacuReportState state, const char *suiteName)
@@ -257,6 +258,8 @@ static void junit_on_test_start(YacuReportState state, const char *testName)
 
 static void junit_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
 {
+    UNUSED(result);
+    UNUSED(message);
     JUnitReport *current = (JUnitReport *)state;
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "    </testcase>\n");
@@ -291,20 +294,24 @@ static void junit_on_suites_finished(YacuReportState state)
 
 static void stdout_on_start_suites(YacuReportState state)
 {
+    UNUSED(state);
 }
 
 static void stdout_on_start_suite(YacuReportState state, const char *suiteName)
 {
+    UNUSED(state);
     printf("#%s\n", suiteName);
 }
 
 static void stdout_on_test_start(YacuReportState state, const char *testName)
 {
+    UNUSED(state);
     printf("  ##%s\n", testName);
 }
 
 static void stdout_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
 {
+    UNUSED(state);
     switch (result)
     {
     case OK:
@@ -316,6 +323,18 @@ static void stdout_on_test_finished(YacuReportState state, YacuStatus result, co
     case TEST_FAILURE:
         printf("    FAILURE\n");
         break;
+    case WRONG_ARGS:
+        printf("    WRONG_ARGS\n");
+        break;
+    case FORK_FAIL:
+        printf("    FORK_FAIL\n");
+        break;
+    case FILE_FAIL:
+        printf("    FILE_FAIL\n");
+        break;
+    case FATAL:
+        printf("    FATAL\n");
+        break;
     }
     if (strlen(message) > 0)
     {
@@ -325,10 +344,12 @@ static void stdout_on_test_finished(YacuReportState state, YacuStatus result, co
 
 static void stdout_on_suite_finished(YacuReportState state)
 {
+    UNUSED(state);
 }
 
 static void stdout_on_suites_finished(YacuReportState state)
 {
+    UNUSED(state);
 }
 
 static void on_suites_started(YacuReportPtr *reports)
@@ -411,7 +432,7 @@ static void on_suites_finished(YacuReportPtr *reports)
 
 YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports)
+static YacuStatus yacu_run_test(YacuTest test, YacuReportPtr *reports)
 {
     YacuTestRun testRun = {.result = OK, .message = "", .forked = false, .reports = reports};
     test.fcn(&testRun);
@@ -421,12 +442,11 @@ static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *repor
 
 static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports)
 {
-    bool testPassed = false;
     YacuStatus returnCode;
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
     {
-        exit(yacu_run_test(true, test, reports));
+        exit(yacu_run_test(test, reports));
     }
     else
     {
@@ -490,7 +510,7 @@ static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
                     on_test_started(reports, testIt->name);
                     YacuStatus testStatus = options.fork
                                                 ? yacu_run_forked_test(*testIt, reports)
-                                                : yacu_run_test(false, *testIt, reports);
+                                                : yacu_run_test(*testIt, reports);
                     if (testStatus == TEST_ERROR || (testStatus == TEST_FAILURE && runStatus != TEST_ERROR))
                     {
                         runStatus = testStatus;

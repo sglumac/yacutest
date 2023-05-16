@@ -1,5 +1,6 @@
 #include <yacu.h>
 #include <others.h>
+#define UNUSED(x) (void)(x)
 
 void test_simple_eq_int(YacuTestRun *testRun)
 {
@@ -68,6 +69,7 @@ void test_wrong_args(YacuTestRun *testRun)
     {
         const char *argv[] = {"./tests", "--wrong-args"};
         YacuOptions options = yacu_process_args(2, argv);
+        UNUSED(options);
     }
     else
     {
@@ -83,6 +85,7 @@ void test_missing_test_args(YacuTestRun *testRun)
     {
         const char *argv[] = {"./tests", "--test"};
         YacuOptions options = yacu_process_args(2, argv);
+        UNUSED(options);
     }
     else
     {
@@ -98,6 +101,7 @@ void test_missing_junit_args(YacuTestRun *testRun)
     {
         const char *argv[] = {"./tests", "--junit"};
         YacuOptions options = yacu_process_args(2, argv);
+        UNUSED(options);
     }
     else
     {
