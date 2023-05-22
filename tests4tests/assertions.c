@@ -23,6 +23,13 @@ void test_assert_cmp_uint(YacuTestRun *testRun)
     YACU_ASSERT_GT_UINT(testRun, small, 0);
 }
 
+void test_assert_eq_char(YacuTestRun *testRun)
+{
+    char x = 'a';
+
+    YACU_ASSERT_EQ_CHAR(testRun, x, 'a');
+}
+
 void test_assert_eq_dbl(YacuTestRun *testRun)
 {
     double x = 1.1;
@@ -40,6 +47,7 @@ void test_assert_true(YacuTestRun *testRun)
 YacuTest assertionTests[] = {
     {"cmpIntTest", &test_assert_cmp_int},
     {"cmpUIntTest", &test_assert_cmp_uint},
+    {"eqCharTest", &test_assert_eq_char},
     {"eqDblTest", &test_assert_eq_dbl},
     {"trueTest", &test_assert_true},
     END_OF_TESTS};
