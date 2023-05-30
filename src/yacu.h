@@ -27,7 +27,6 @@ SOFTWARE.
 #ifndef YACU_H
 #define YACU_H
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
