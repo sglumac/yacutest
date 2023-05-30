@@ -28,7 +28,6 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 static bool end_of_suites(const YacuSuite suite)
 {
@@ -236,13 +235,10 @@ static void junit_on_start_suites(YacuReportState state)
 static void junit_on_start_suite(YacuReportState state, const char *suiteName)
 {
     JUnitReport *current = (JUnitReport *)state;
-    time_t t = time(NULL);
-    struct tm tm = *localtime(&t);
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "  <testsuite package=\"\" id=\"0\" name=\"%s\"", suiteName);
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
-                  " timestamp=\"%d-%02d-%02dT%02d:%02d:%02d\"",
-                  tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+                  " timestamp=\"1900-12-12T%11:11:11\"");
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   " hostname=\"-\" tests=\"4\" failures=\"2\" errors=\"1\" time=\"3\">\n");
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
