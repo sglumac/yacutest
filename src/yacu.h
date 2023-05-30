@@ -82,10 +82,11 @@ typedef struct YacuOptions
     const char *testName;
     bool fork;
     const char *jUnitPath;
+    bool stdoutReport;
     YacuReport *customReport;
 } YacuOptions;
 
-YacuOptions default_options();
+YacuOptions yacu_default_options();
 
 #ifndef YACU_JUNIT_MAX_SIZE
 #define YACU_JUNIT_MAX_SIZE 1000000

@@ -28,7 +28,7 @@ void test_forked_failure(YacuTestRun *testRun)
     YacuSuite suitesForForked[] = {
         {"suiteForForked", testsForForked},
         END_OF_SUITES};
-    YacuOptions options = default_options();
+    YacuOptions options = yacu_default_options();
     options.fork = true;
     YacuStatus returnCode = yacu_execute(options, suitesForForked);
     YACU_ASSERT_EQ_INT(testRun, returnCode, TEST_FAILURE);

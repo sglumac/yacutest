@@ -47,7 +47,7 @@ static bool end_of_reports(YacuReport *report)
                : report->on_suite_finished == NULL && report->on_suite_started == NULL && report->on_suites_finished == NULL && report->on_suites_started == NULL && report->on_test_finished == NULL && report->on_test_started == NULL && report->state == NULL;
 }
 
-YacuOptions default_options()
+YacuOptions yacu_default_options()
 {
     YacuOptions options = {
         .action = RUN_TESTS,
@@ -55,6 +55,7 @@ YacuOptions default_options()
         .suiteName = NULL,
         .testName = NULL,
         .jUnitPath = NULL,
+        .stdoutReport = true,
         .customReport = NULL};
     return options;
 }
@@ -118,7 +119,7 @@ static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuO
 
 YacuOptions yacu_process_args(int argc, char const *argv[])
 {
-    YacuOptions options = default_options();
+    YacuOptions options = yacu_default_options();
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--help") == 0)
