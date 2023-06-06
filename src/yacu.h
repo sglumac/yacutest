@@ -83,6 +83,7 @@ typedef struct YacuOptions
     const char *jUnitPath;
     bool stdoutReport;
     YacuReport *customReport;
+    const void *runData;
 } YacuOptions;
 
 YacuOptions yacu_default_options();
@@ -101,6 +102,7 @@ typedef struct YacuTestRun
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
     bool forked;
     YacuReportPtr *reports;
+    const void *runData;
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);

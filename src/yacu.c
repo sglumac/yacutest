@@ -429,21 +429,21 @@ static void on_suites_finished(YacuReportPtr *reports)
 
 YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports)
+static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports, const void *runData)
 {
-    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports};
+    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports, .runData = runData};
     test.fcn(&testRun);
     on_test_finished(reports, testRun.result, testRun.message);
     return testRun.result;
 }
 
-static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports)
+static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports, const void *runData)
 {
     YacuStatus returnCode;
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
     {
-        exit(yacu_run_test(true, test, reports));
+        exit(yacu_run_test(true, test, reports, runData));
     }
     else
     {
@@ -506,8 +506,8 @@ static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
                 {
                     on_test_started(reports, testIt->name);
                     YacuStatus testStatus = options.fork
-                                                ? yacu_run_forked_test(*testIt, reports)
-                                                : yacu_run_test(false, *testIt, reports);
+                                                ? yacu_run_forked_test(*testIt, reports, options.runData)
+                                                : yacu_run_test(false, *testIt, reports, options.runData);
                     if (testStatus == TEST_ERROR || (testStatus == TEST_FAILURE && runStatus != TEST_ERROR))
                     {
                         runStatus = testStatus;
