@@ -33,13 +33,6 @@ SOFTWARE.
 #include <stdarg.h>
 #include <string.h>
 
-typedef enum YacuAction
-{
-    HELP = 0,
-    LIST = 1,
-    RUN_TESTS = 2
-} YacuAction;
-
 typedef enum YacuStatus
 {
     OK = 0,
@@ -76,7 +69,6 @@ extern YacuReport END_OF_REPORTS;
 
 typedef struct YacuOptions
 {
-    YacuAction action;
     const char *suiteName;
     const char *testName;
     bool fork;

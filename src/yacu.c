@@ -49,7 +49,6 @@ static bool end_of_reports(YacuReport *report)
 YacuOptions yacu_default_options()
 {
     YacuOptions options = {
-        .action = RUN_TESTS,
         .fork = true,
         .suiteName = NULL,
         .testName = NULL,
@@ -90,18 +89,6 @@ const char *helpString = "Usage: [<option1> <option2>...]\n"
                          "     Prints this help message and exits.\n"
                          "     This should be the only option used.";
 
-static void list_suites(FILE *file, const YacuSuite *suites)
-{
-    for (const YacuSuite *suite = suites; !end_of_suites(*suite); suite++)
-    {
-        fprintf(file, "%s\n", suite->name);
-        for (const YacuTest *test = suite->tests; !end_of_tests(*test); test++)
-        {
-            fprintf(file, "- %s\n", test->name);
-        }
-    }
-}
-
 static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuOptions *options, bool withTest)
 {
     if (argc <= i + (withTest ? 2 : 1))
@@ -109,7 +96,6 @@ static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuO
         exit(WRONG_ARGS);
     }
     options->suiteName = argv[i + 1];
-    options->action = RUN_TESTS;
     if (withTest)
     {
         options->testName = argv[i + 2];
@@ -121,15 +107,7 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
     YacuOptions options = yacu_default_options();
     for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--help") == 0)
-        {
-            options.action = HELP;
-        }
-        else if (strcmp(argv[i], "--list") == 0)
-        {
-            options.action = LIST;
-        }
-        else if (strcmp(argv[i], "--test") == 0)
+        if (strcmp(argv[i], "--test") == 0)
         {
             process_test_or_suite_arg(i, argc, argv, &options, true);
             i = i + 2;
@@ -523,17 +501,5 @@ static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
 
 YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
-    switch (options.action)
-    {
-    case LIST:
-        list_suites(stdout, suites);
-        return OK;
-    case RUN_TESTS:
-        return run_tests(options, suites);
-    case HELP:
-        printf("%s\n", helpString);
-        return OK;
-    default:
-        return FATAL;
-    }
+    return run_tests(options, suites);
 }

@@ -16,22 +16,6 @@ YacuSuite suites4Others[] = {
     {"ForOthers", forOthers},
     END_OF_SUITES};
 
-void test_list_suites(YacuTestRun *testRun)
-{
-    const char *argv[] = {"./tests", "--list", "--no-fork"};
-    YacuOptions options = yacu_process_args(3, argv);
-    YacuStatus returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
-}
-
-void test_help(YacuTestRun *testRun)
-{
-    const char *argv[] = {"./tests", "--help"};
-    YacuOptions options = yacu_process_args(2, argv);
-    YacuStatus returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
-}
-
 void test_run_single_test(YacuTestRun *testRun)
 {
     const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest", "--no-fork"};
@@ -143,8 +127,6 @@ void test_run_single_suite_with_fork(YacuTestRun *testRun)
 }
 
 YacuTest otherTests[] = {
-    {"ListSuitesTest", &test_list_suites},
-    {"HelpTest", &test_help},
     {"SingleTestTest", &test_run_single_test},
     {"SingleSuiteTest", &test_run_single_suite},
     {"SingleSuiteTestWithFork", &test_run_single_suite_with_fork},
