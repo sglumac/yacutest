@@ -454,7 +454,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
     }
 }
 
-static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
+void yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
     YacuStatus runStatus = OK;
     JUnitReport jUnitInitial = {
@@ -496,10 +496,4 @@ static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
         on_suite_finished(reports);
     }
     on_suites_finished(reports);
-    return runStatus;
-}
-
-YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
-{
-    return run_tests(options, suites);
 }

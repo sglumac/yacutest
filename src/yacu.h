@@ -123,7 +123,7 @@ typedef struct YacuSuite
 
 YacuOptions yacu_process_args(int argc, char const *argv[]);
 
-YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites);
+void yacu_execute(YacuOptions options, const YacuSuite *suites);
 
 void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 

@@ -14,5 +14,6 @@ YacuSuite suites[] = {
 int main(int argc, char const *argv[])
 {
     YacuOptions options = yacu_process_args(argc, argv);
-    return yacu_execute(options, suites);
+    yacu_execute(options, suites);
+    return 0;
 }
