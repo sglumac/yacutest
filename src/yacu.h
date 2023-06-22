@@ -48,7 +48,8 @@ typedef void *YacuReportState;
 typedef void (*YacuReportOnSuitesStarted)(YacuReportState state);
 typedef void (*YacuReportOnSuiteStarted)(YacuReportState state, const char *suiteName);
 typedef void (*YacuReportOnTestStarted)(YacuReportState state, const char *testName);
-typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuStatus result, const char *message);
+typedef void (*YacuReportOnTestError)(YacuReportState state, const char *message);
+typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuStatus result);
 typedef void (*YacuReportOnSuiteFinished)(YacuReportState state);
 typedef void (*YacuReportOnSuitesFinished)(YacuReportState state);
 
@@ -58,6 +59,7 @@ typedef struct YacuReport
     YacuReportOnSuitesStarted on_suites_started;
     YacuReportOnSuiteStarted on_suite_started;
     YacuReportOnTestStarted on_test_started;
+    YacuReportOnTestError on_test_error;
     YacuReportOnTestFinished on_test_finished;
     YacuReportOnSuiteFinished on_suite_finished;
     YacuReportOnSuitesFinished on_suites_finished;
@@ -90,7 +92,6 @@ YacuOptions yacu_default_options();
 
 typedef struct YacuTestRun
 {
-    YacuStatus result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
     bool forked;
     YacuReportPtr *reports;

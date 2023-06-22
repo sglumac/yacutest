@@ -72,23 +72,6 @@ static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format
     va_end(args);
 }
 
-const char *helpString = "Usage: [<option1> <option2>...]\n"
-                         " --no-fork\n"
-                         "     Do not use fork from unistd.h to run the tests.\n"
-                         "     The tests are executed sequentially and execution stops when the first one fails.\n"
-                         " --test <suiteName> <testName>\n"
-                         "     Run a single test named <testName> from the suite named <suiteName>.\n"
-                         " --suite <suiteName>\n"
-                         "     Run all tests from the suite named <suiteName>.\n"
-                         " --list\n"
-                         "     Prints the list of all available suites and tests.\n"
-                         "     This should be the only option used.\n"
-                         " --junit <xmlFile>"
-                         "     Save the test reports in <xmlFile> in JUnit format.\n"
-                         " --help\n"
-                         "     Prints this help message and exits.\n"
-                         "     This should be the only option used.";
-
 static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuOptions *options, bool withTest)
 {
     if (argc <= i + (withTest ? 2 : 1))
@@ -231,10 +214,17 @@ static void junit_on_test_start(YacuReportState state, const char *testName)
                   testName);
 }
 
-static void junit_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
+static void junit_on_test_error(YacuReportState state, const char *message)
+{
+    JUnitReport *current = (JUnitReport *)state;
+    buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
+                  "        %s\n",
+                  message);
+}
+
+static void junit_on_test_finished(YacuReportState state, YacuStatus result)
 {
     UNUSED(result);
-    UNUSED(message);
     JUnitReport *current = (JUnitReport *)state;
     buffer_append(current->jUnitBuffer, YACU_TEST_RUN_MESSAGE_MAX_SIZE,
                   "    </testcase>\n");
@@ -284,7 +274,13 @@ static void stdout_on_test_start(YacuReportState state, const char *testName)
     printf("  ##%s\n", testName);
 }
 
-static void stdout_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
+static void stdout_on_test_error(YacuReportState state, const char *message)
+{
+    UNUSED(state);
+    printf("  ##%s\n", message);
+}
+
+static void stdout_on_test_finished(YacuReportState state, YacuStatus result)
 {
     UNUSED(state);
     switch (result)
@@ -310,10 +306,6 @@ static void stdout_on_test_finished(YacuReportState state, YacuStatus result, co
     case FATAL:
         printf("    FATAL\n");
         break;
-    }
-    if (strlen(message) > 0)
-    {
-        printf("    %s\n", message);
     }
 }
 
@@ -366,7 +358,7 @@ static void on_test_started(YacuReportPtr *reports, const char *testName)
     }
 }
 
-static void on_test_finished(YacuReportPtr *reports, YacuStatus result, const char *message)
+static void on_test_error(YacuReportPtr *reports, const char *message)
 {
     for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
     {
@@ -375,7 +367,20 @@ static void on_test_finished(YacuReportPtr *reports, YacuStatus result, const ch
             continue;
         }
         YacuReport *report = *reportPtr2Ptr;
-        report->on_test_finished(report->state, result, message);
+        report->on_test_error(report->state, message);
+    }
+}
+
+static void on_test_finished(YacuReportPtr *reports, YacuStatus result)
+{
+    for (YacuReportPtr *reportPtr2Ptr = reports; !end_of_reports(*reportPtr2Ptr); reportPtr2Ptr++)
+    {
+        if (*reportPtr2Ptr == NULL)
+        {
+            continue;
+        }
+        YacuReport *report = *reportPtr2Ptr;
+        report->on_test_finished(report->state, result);
     }
 }
 
@@ -405,14 +410,12 @@ static void on_suites_finished(YacuReportPtr *reports)
     }
 }
 
-YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+YacuReport END_OF_REPORTS = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-static YacuStatus yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports, const void *runData)
+static void yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports, const void *runData)
 {
-    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports, .runData = runData};
+    YacuTestRun testRun = {.message = "", .forked = forked, .reports = reports, .runData = runData};
     test.fcn(&testRun);
-    on_test_finished(reports, testRun.result, testRun.message);
-    return testRun.result;
 }
 
 static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports, const void *runData)
@@ -421,7 +424,8 @@ static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports, co
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
     {
-        exit(yacu_run_test(true, test, reports, runData));
+        yacu_run_test(true, test, reports, runData);
+        exit(OK);
     }
     else
     {
@@ -429,7 +433,7 @@ static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports, co
     }
     if (returnCode != OK)
     {
-        on_test_finished(reports, returnCode, "Something failed!");
+        on_test_finished(reports, returnCode);
     }
     return returnCode;
 }
@@ -438,15 +442,14 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 {
     if (!(condition))
     {
-        testRun->result = TEST_FAILURE;
-
         va_list args;
         va_start(args, fmt);
         vbuffer_append(testRun->message, YACU_TEST_RUN_MESSAGE_MAX_SIZE, fmt, args);
         va_end(args);
-        if (!testRun->forked && testRun->result == TEST_FAILURE)
+        on_test_error(testRun->reports, testRun->message);
+        if (!testRun->forked)
         {
-            on_test_finished(testRun->reports, testRun->result, testRun->message);
+            on_test_finished(testRun->reports, TEST_FAILURE);
             on_suite_finished(testRun->reports);
             on_suites_finished(testRun->reports);
         }
@@ -456,19 +459,26 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 
 void yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
-    YacuStatus runStatus = OK;
     JUnitReport jUnitInitial = {
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<testsuites>\n",
         options.jUnitPath};
-    YacuReport jUnitReport = {
-        &jUnitInitial,
-        junit_on_start_suites, junit_on_start_suite, junit_on_test_start,
-        junit_on_test_finished, junit_on_suite_finished, junit_on_suites_finished};
-    YacuReport stdoutReport = {
-        NULL,
-        stdout_on_start_suites, stdout_on_start_suite, stdout_on_test_start,
-        stdout_on_test_finished, stdout_on_suite_finished, stdout_on_suites_finished};
+    YacuReport jUnitReport = {.state = &jUnitInitial,
+                              .on_suites_started = junit_on_start_suites,
+                              .on_suite_started = junit_on_start_suite,
+                              .on_test_started = junit_on_test_start,
+                              .on_test_error = junit_on_test_error,
+                              .on_test_finished = junit_on_test_finished,
+                              .on_suite_finished = junit_on_suite_finished,
+                              .on_suites_finished = junit_on_suites_finished};
+    YacuReport stdoutReport = {.state = NULL,
+                               .on_suites_started = stdout_on_start_suites,
+                               .on_suite_started = stdout_on_start_suite,
+                               .on_test_started = stdout_on_test_start,
+                               .on_test_error = stdout_on_test_error,
+                               .on_test_finished = stdout_on_test_finished,
+                               .on_suite_finished = stdout_on_suite_finished,
+                               .on_suites_finished = stdout_on_suites_finished};
 
     YacuReportPtr reports[] = {&jUnitReport, &stdoutReport, options.customReport, &END_OF_REPORTS};
 
@@ -483,12 +493,15 @@ void yacu_execute(YacuOptions options, const YacuSuite *suites)
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
                     on_test_started(reports, testIt->name);
-                    YacuStatus testStatus = options.fork
-                                                ? yacu_run_forked_test(*testIt, reports, options.runData)
-                                                : yacu_run_test(false, *testIt, reports, options.runData);
-                    if (testStatus == TEST_ERROR || (testStatus == TEST_FAILURE && runStatus != TEST_ERROR))
+                    if (options.fork)
                     {
-                        runStatus = testStatus;
+
+                        yacu_run_forked_test(*testIt, reports, options.runData);
+                    }
+                    else
+                    {
+                        yacu_run_test(false, *testIt, reports, options.runData);
+                        on_test_finished(reports, OK);
                     }
                 }
             }
