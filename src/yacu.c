@@ -49,7 +49,6 @@ static bool end_of_reports(YacuReport *report)
 YacuOptions yacu_default_options()
 {
     YacuOptions options = {
-        .fork = true,
         .suiteName = NULL,
         .testName = NULL,
         .jUnitPath = NULL,
@@ -108,10 +107,6 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
             }
             options.jUnitPath = argv[i + 1];
             i++;
-        }
-        else if (strcmp(argv[i], "--no-fork") == 0)
-        {
-            options.fork = false;
         }
         else
         {
@@ -418,26 +413,6 @@ static void yacu_run_test(bool forked, YacuTest test, YacuReportPtr *reports, co
     test.fcn(&testRun);
 }
 
-static YacuStatus yacu_run_forked_test(YacuTest test, YacuReportPtr *reports, const void *runData)
-{
-    YacuStatus returnCode;
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        yacu_run_test(true, test, reports, runData);
-        exit(OK);
-    }
-    else
-    {
-        returnCode = wait_for_forked(pid);
-    }
-    if (returnCode != OK)
-    {
-        on_test_finished(reports, returnCode);
-    }
-    return returnCode;
-}
-
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 {
     if (!(condition))
@@ -493,16 +468,9 @@ void yacu_execute(YacuOptions options, const YacuSuite *suites)
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
                     on_test_started(reports, testIt->name);
-                    if (options.fork)
-                    {
 
-                        yacu_run_forked_test(*testIt, reports, options.runData);
-                    }
-                    else
-                    {
-                        yacu_run_test(false, *testIt, reports, options.runData);
-                        on_test_finished(reports, OK);
-                    }
+                    yacu_run_test(false, *testIt, reports, options.runData);
+                    on_test_finished(reports, OK);
                 }
             }
         }

@@ -19,16 +19,16 @@ YacuSuite suites4Others[] = {
 void test_run_single_test(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest", "--no-fork"};
-    YacuOptions options = yacu_process_args(5, argv);
+    const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest"};
+    YacuOptions options = yacu_process_args(4, argv);
     yacu_execute(options, suites4Others);
 }
 
 void test_run_single_suite(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--suite", "ForOthers", "--no-fork"};
-    YacuOptions options = yacu_process_args(4, argv);
+    const char *argv[] = {"./tests", "--suite", "ForOthers"};
+    YacuOptions options = yacu_process_args(3, argv);
     yacu_execute(options, suites4Others);
 }
 

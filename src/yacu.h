@@ -73,7 +73,6 @@ typedef struct YacuOptions
 {
     const char *suiteName;
     const char *testName;
-    bool fork;
     const char *jUnitPath;
     bool stdoutReport;
     YacuReport *customReport;
@@ -131,10 +130,13 @@ void test_run_message_append(YacuTestRun *testRun, const char *format, ...);
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 
 #define YACU_ASSERT(testRun, condition, label, fmt, ...) \
-    yacu_assert(testRun, condition, "%s:%d - Assertion %s (" fmt ") failed!", __FILE__, __LINE__, label, __VA_ARGS__)
+    yacu_assert(testRun, condition, "%s:%d - Assertion %s (" fmt ") failed!", __FILE__, __LINE__, label, __VA_ARGS__);
 
-#define YACU_ASSERT_TRUE(testRun, condition) \
-    YACU_ASSERT(testRun, condition, #condition, "%d", condition)
+#define YACU_ASSERT_TRUE(testRun, condition)                                    \
+    {                                                                           \
+        bool conditionValue = (condition);                                      \
+        YACU_ASSERT(testRun, conditionValue, #condition, "%d", conditionValue); \
+    }
 
 #define YACU_ASSERT_EQ_STR(testRun, left, right) \
     YACU_ASSERT(testRun, strcmp(left, right) == 0, #left " == " #right, "\"%s\" == \"%s\"", left, right)
@@ -142,10 +144,14 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 #define YACU_ASSERT_IN_STR(testRun, left, right) \
     YACU_ASSERT(testRun, strstr(right, left) != NULL, #left " IN " #right, "\"%s\" IN \"%s\"", left, right)
 
-#define YACU_ASSERT_CMP(testRun, leftfmt, rightfmt, left, cmp, right) \
-    YACU_ASSERT(testRun, left cmp right, #left " " #cmp " " #right, leftfmt " " #cmp " " rightfmt, left, right)
+#define YACU_ASSERT_CMP(testRun, leftfmt, rightfmt, lefttype, righttype, left, cmp, right)                                               \
+    {                                                                                                                                    \
+        lefttype leftValue = (left);                                                                                                     \
+        righttype rightValue = (right);                                                                                                  \
+        YACU_ASSERT(testRun, leftValue cmp rightValue, #left " " #cmp " " #right, leftfmt " " #cmp " " rightfmt, leftValue, rightValue); \
+    }
 
-#define YACU_ASSERT_CMP_INT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%d", "%d", left, cmp, right)
+#define YACU_ASSERT_CMP_INT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%d", "%d", int, int, left, cmp, right)
 
 #define YACU_ASSERT_LT_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, <, right)
 #define YACU_ASSERT_LE_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, <=, right)
@@ -153,7 +159,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 #define YACU_ASSERT_GT_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, >, right)
 #define YACU_ASSERT_GE_INT(testRun, left, right) YACU_ASSERT_CMP_INT(testRun, left, >=, right)
 
-#define YACU_ASSERT_CMP_UINT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%u", "%u", left, cmp, right)
+#define YACU_ASSERT_CMP_UINT(testRun, left, cmp, right) YACU_ASSERT_CMP(testRun, "%u", "%u", unsigned int, unsigned int, left, cmp, right)
 
 #define YACU_ASSERT_LT_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, <, right)
 #define YACU_ASSERT_LE_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, <=, right)
@@ -161,19 +167,24 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 #define YACU_ASSERT_GT_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >, right)
 #define YACU_ASSERT_GE_UINT(testRun, left, right) YACU_ASSERT_CMP_UINT(testRun, left, >=, right)
 
-#define YACU_ASSERT_EQ_CHAR(testRun, left, right) YACU_ASSERT_CMP(testRun, "%c", "%c", left, ==, right)
+#define YACU_ASSERT_EQ_CHAR(testRun, left, right) YACU_ASSERT_CMP(testRun, "%c", "%c", char, char, left, ==, right)
 
 #define YACU_ABS(x) ((x) > 0 ? (x) : -(x))
 
-#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, left, right, tol) \
-    YACU_ASSERT(testRun,                                                            \
-                YACU_ABS((left) - (right)) < (tol),                                 \
-                "|" #left " - " #right "| < " #tol,                                 \
-                "|" leftfmt " - " rightfmt "| < " tolfmt,                           \
-                left, right, tol)
+#define YACU_ASSERT_APPROX_EQ(testRun, leftfmt, rightfmt, tolfmt, lefttype, righttype, toltype, left, right, tol) \
+    {                                                                                                             \
+        lefttype leftValue = (left);                                                                              \
+        righttype rightValue = (right);                                                                           \
+        toltype tolValue = (tol);                                                                                 \
+        YACU_ASSERT(testRun,                                                                                      \
+                    YACU_ABS((leftValue) - (rightValue)) < (tolValue),                                            \
+                    "|" #left " - " #right "| < " #tol,                                                           \
+                    "|" leftfmt " - " rightfmt "| < " tolfmt,                                                     \
+                    leftValue, rightValue, tolValue)                                                              \
+    }
 
 #define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, right, tol) \
-    YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", left, right, tol)
+    YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", double, double, double, left, right, tol)
 
 #if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
 #define FORK_AVAILABLE
