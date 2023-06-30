@@ -52,7 +52,6 @@ YacuOptions yacu_default_options()
         .suiteName = NULL,
         .testName = NULL,
         .jUnitPath = NULL,
-        .stdoutReport = true,
         .customReport = NULL};
     return options;
 }

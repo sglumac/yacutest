@@ -74,7 +74,6 @@ typedef struct YacuOptions
     const char *suiteName;
     const char *testName;
     const char *jUnitPath;
-    bool stdoutReport;
     YacuReport *customReport;
     const void *runData;
 } YacuOptions;
