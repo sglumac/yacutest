@@ -19,16 +19,17 @@ YacuSuite suites4Others[] = {
 void test_run_single_test(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest"};
-    YacuOptions options = yacu_process_args(4, argv);
+    YacuOptions options = yacu_default_options();
+    options.suiteName = "ForOthers";
+    options.testName = "cmpIntTest";
     yacu_execute(options, suites4Others);
 }
 
 void test_run_single_suite(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--suite", "ForOthers"};
-    YacuOptions options = yacu_process_args(3, argv);
+    YacuOptions options = yacu_default_options();
+    options.suiteName = "ForOthers";
     yacu_execute(options, suites4Others);
 }
 
@@ -46,61 +47,13 @@ void test_fork(YacuTestRun *testRun)
     }
 }
 
-void test_wrong_args(YacuTestRun *testRun)
-{
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        const char *argv[] = {"./tests", "--wrong-args"};
-        YacuOptions options = yacu_process_args(2, argv);
-        UNUSED(options);
-    }
-    else
-    {
-        YacuStatus returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
-    }
-}
-
-void test_missing_test_args(YacuTestRun *testRun)
-{
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        const char *argv[] = {"./tests", "--test"};
-        YacuOptions options = yacu_process_args(2, argv);
-        UNUSED(options);
-    }
-    else
-    {
-        YacuStatus returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
-    }
-}
-
-void test_missing_junit_args(YacuTestRun *testRun)
-{
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        const char *argv[] = {"./tests", "--junit"};
-        YacuOptions options = yacu_process_args(2, argv);
-        UNUSED(options);
-    }
-    else
-    {
-        YacuStatus returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, WRONG_ARGS);
-    }
-}
-
 void test_junit_creation_fail(YacuTestRun *testRun)
 {
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
     {
-        const char *argv[] = {"./tests", "--junit", "nonexistingdir/report.xml"};
-        YacuOptions options = yacu_process_args(3, argv);
+        YacuOptions options = yacu_default_options();
+        options.jUnitPath = "nonexistingdir/report.xml";
         yacu_execute(options, suites4Others);
     }
     else
@@ -113,16 +66,16 @@ void test_junit_creation_fail(YacuTestRun *testRun)
 void test_junit_creation(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--junit", "success.xml", "--no-fork"};
-    YacuOptions options = yacu_process_args(3, argv);
+    YacuOptions options = yacu_default_options();
+    options.jUnitPath = "success.xml";
     yacu_execute(options, suites4Others);
 }
 
 void test_run_single_suite_with_fork(YacuTestRun *testRun)
 {
     UNUSED(testRun);
-    const char *argv[] = {"./tests", "--suite", "ForOthers"};
-    YacuOptions options = yacu_process_args(3, argv);
+    YacuOptions options = yacu_default_options();
+    options.suiteName = "ForOthers";
     yacu_execute(options, suites4Others);
 }
 
@@ -131,9 +84,6 @@ YacuTest otherTests[] = {
     {"SingleSuiteTest", &test_run_single_suite},
     {"SingleSuiteTestWithFork", &test_run_single_suite_with_fork},
     {"ForkTest", &test_fork},
-    {"WrongArgsTest", &test_wrong_args},
-    {"MissingTestArgs", &test_missing_test_args},
-    {"MissingJUnitArgs", &test_missing_junit_args},
     {"JUnitCreationFailTest", &test_junit_creation_fail},
     {"JUnitCreationTest", &test_junit_creation},
     END_OF_TESTS};

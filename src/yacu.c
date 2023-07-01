@@ -70,51 +70,6 @@ static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format
     va_end(args);
 }
 
-static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuOptions *options, bool withTest)
-{
-    if (argc <= i + (withTest ? 2 : 1))
-    {
-        exit(WRONG_ARGS);
-    }
-    options->suiteName = argv[i + 1];
-    if (withTest)
-    {
-        options->testName = argv[i + 2];
-    }
-}
-
-YacuOptions yacu_process_args(int argc, char const *argv[])
-{
-    YacuOptions options = yacu_default_options();
-    for (int i = 1; i < argc; i++)
-    {
-        if (strcmp(argv[i], "--test") == 0)
-        {
-            process_test_or_suite_arg(i, argc, argv, &options, true);
-            i = i + 2;
-        }
-        else if (strcmp(argv[i], "--suite") == 0)
-        {
-            process_test_or_suite_arg(i, argc, argv, &options, false);
-            i++;
-        }
-        else if (strcmp(argv[i], "--junit") == 0)
-        {
-            if (argc <= i + 1)
-            {
-                exit(WRONG_ARGS);
-            }
-            options.jUnitPath = argv[i + 1];
-            i++;
-        }
-        else
-        {
-            exit(WRONG_ARGS);
-        }
-    }
-    return options;
-}
-
 YacuProcessHandle yacu_fork()
 {
     fflush(stdout);
