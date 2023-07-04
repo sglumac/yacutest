@@ -44,56 +44,27 @@ typedef enum YacuStatus
     FATAL = 99,
 } YacuStatus;
 
-typedef void *YacuReportState;
-typedef void (*YacuReportOnSuitesStarted)(YacuReportState state);
-typedef void (*YacuReportOnSuiteStarted)(YacuReportState state, const char *suiteName);
-typedef void (*YacuReportOnTestStarted)(YacuReportState state, const char *testName);
-typedef void (*YacuReportOnTestError)(YacuReportState state, const char *message);
-typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuStatus result);
-typedef void (*YacuReportOnSuiteFinished)(YacuReportState state);
-typedef void (*YacuReportOnSuitesFinished)(YacuReportState state);
-
-typedef struct YacuReport
-{
-    YacuReportState state;
-    YacuReportOnSuitesStarted on_suites_started;
-    YacuReportOnSuiteStarted on_suite_started;
-    YacuReportOnTestStarted on_test_started;
-    YacuReportOnTestError on_test_error;
-    YacuReportOnTestFinished on_test_finished;
-    YacuReportOnSuiteFinished on_suite_finished;
-    YacuReportOnSuitesFinished on_suites_finished;
-} YacuReport;
-
-typedef YacuReport *YacuReportPtr;
-
-extern YacuReport END_OF_REPORTS;
-
 typedef struct YacuOptions
 {
     const char *suiteName;
     const char *testName;
-    const char *jUnitPath;
-    YacuReport *customReport;
     const void *runData;
 } YacuOptions;
 
 YacuOptions yacu_default_options();
 
-#ifndef YACU_JUNIT_MAX_SIZE
-#define YACU_JUNIT_MAX_SIZE 1000000
-#endif
-
 #ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
 #define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
 #endif
 
+typedef void (*YacuTestLog)(void *logData, const char *message);
+
 typedef struct YacuTestRun
 {
-    char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
-    bool forked;
-    YacuReportPtr *reports;
     const void *runData;
+    YacuTestLog log;
+    void *logData;
+
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);

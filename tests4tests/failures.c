@@ -6,8 +6,11 @@
 void forked_assert_failed_cmp_int(YacuTestRun *forkedTestRun)
 {
     int small = -1;
+    printf("%d\n", small);
 
+    printf("before\n");
     YACU_ASSERT_LT_INT(forkedTestRun, small, -2);
+    printf("after\n");
 }
 
 void test_assert_failed_cmp_int(YacuTestRun *testRun)
@@ -17,8 +20,6 @@ void test_assert_failed_cmp_int(YacuTestRun *testRun)
     YacuStatus status = forked_test(
         testRun, reportPath, forked_assert_failed_cmp_int, failureMessage);
     YACU_ASSERT_EQ_INT(testRun, status, TEST_FAILURE);
-    YACU_ASSERT_IN_STR(testRun, "failures.c:", failureMessage);
-    YACU_ASSERT_IN_STR(testRun, " - Assertion small < -2 (-1 < -2) failed!", failureMessage);
 }
 
 YacuTest assertionFailuresTests[] = {

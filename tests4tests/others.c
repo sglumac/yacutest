@@ -47,30 +47,6 @@ void test_fork(YacuTestRun *testRun)
     }
 }
 
-void test_junit_creation_fail(YacuTestRun *testRun)
-{
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        YacuOptions options = yacu_default_options();
-        options.jUnitPath = "nonexistingdir/report.xml";
-        yacu_execute(options, suites4Others);
-    }
-    else
-    {
-        YacuStatus returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
-    }
-}
-
-void test_junit_creation(YacuTestRun *testRun)
-{
-    UNUSED(testRun);
-    YacuOptions options = yacu_default_options();
-    options.jUnitPath = "success.xml";
-    yacu_execute(options, suites4Others);
-}
-
 void test_run_single_suite_with_fork(YacuTestRun *testRun)
 {
     UNUSED(testRun);
@@ -84,6 +60,4 @@ YacuTest otherTests[] = {
     {"SingleSuiteTest", &test_run_single_suite},
     {"SingleSuiteTestWithFork", &test_run_single_suite_with_fork},
     {"ForkTest", &test_fork},
-    {"JUnitCreationFailTest", &test_junit_creation_fail},
-    {"JUnitCreationTest", &test_junit_creation},
     END_OF_TESTS};
