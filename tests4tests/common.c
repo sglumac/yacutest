@@ -7,10 +7,16 @@ typedef struct FileReport
     const char *filePath;
 } FileReport;
 
+static void yacu_basic_log(void *logData, const char *message)
+{
+    UNUSED(logData);
+    printf("%s\n", message);
+}
+
 YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char *failureMessage)
 {
     UNUSED(testRun);
-    YacuTestRun forkedTestRun;
+    YacuTestRun forkedTestRun = {.log = yacu_basic_log};
     YacuProcessHandle pid = yacu_fork();
     if (is_forked(pid))
     {

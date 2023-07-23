@@ -135,19 +135,24 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
     }
 }
 
+static void yacu_run_suite(YacuOptions options, const YacuSuite *suiteIt)
+{
+    for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
+    {
+        if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
+        {
+            yacu_run_test(*testIt, options.runData);
+        }
+    }
+}
+
 void yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
         if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
         {
-            for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
-            {
-                if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
-                {
-                    yacu_run_test(*testIt, options.runData);
-                }
-            }
+            yacu_run_suite(options, suiteIt);
         }
     }
 }
