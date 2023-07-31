@@ -20,8 +20,8 @@ void test_run_single_test(YacuTestRun *testRun)
 {
     UNUSED(testRun);
     YacuOptions options = yacu_default_options();
-    options.suiteName = "ForOthers";
-    options.testName = "cmpIntTest";
+    options.singleSuite = "ForOthers";
+    options.singleTest = "cmpIntTest";
     yacu_execute(options, suites4Others);
 }
 
@@ -29,7 +29,7 @@ void test_run_single_suite(YacuTestRun *testRun)
 {
     UNUSED(testRun);
     YacuOptions options = yacu_default_options();
-    options.suiteName = "ForOthers";
+    options.singleSuite = "ForOthers";
     yacu_execute(options, suites4Others);
 }
 
@@ -51,7 +51,7 @@ void test_run_single_suite_with_fork(YacuTestRun *testRun)
 {
     UNUSED(testRun);
     YacuOptions options = yacu_default_options();
-    options.suiteName = "ForOthers";
+    options.singleSuite = "ForOthers";
     yacu_execute(options, suites4Others);
 }
 

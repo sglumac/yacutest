@@ -41,11 +41,20 @@ static bool end_of_tests(const YacuTest test)
     return test.name == NULL;
 }
 
+static bool end_of_decorators(const YacuTestFcnDecorator decorator)
+{
+    return decorator.before == NULL && decorator.after == NULL;
+}
+
+static YacuTestFcnDecorator DEFAULT_DECORATORS[] = {END_OF_DECORATORS};
+
 YacuOptions yacu_default_options()
 {
     YacuOptions options = {
-        .suiteName = NULL,
-        .testName = NULL};
+        .singleSuite = NULL,
+        .singleTest = NULL,
+        .runData = NULL,
+        .decorators = DEFAULT_DECORATORS};
     return options;
 }
 
@@ -115,10 +124,24 @@ static void yacu_basic_log(void *logData, const char *message)
     printf("%s\n", message);
 }
 
-static void yacu_run_test(YacuTest test, const void *runData)
+static void yacu_run_test(const YacuTestFcnDecorator *decorators, YacuTest test, const void *runData)
 {
     YacuTestRun testRun = {.log = yacu_basic_log, .runData = runData};
+    for (const YacuTestFcnDecorator *decoratorIt = decorators; !end_of_decorators(*decoratorIt); decoratorIt++)
+    {
+        if (decoratorIt->before != NULL)
+        {
+            decoratorIt->before(&testRun);
+        }
+    }
     test.fcn(&testRun);
+    for (const YacuTestFcnDecorator *decoratorIt = decorators; !end_of_decorators(*decoratorIt); decoratorIt++)
+    {
+        if (decoratorIt->after != NULL)
+        {
+            decoratorIt->after(&testRun);
+        }
+    }
 }
 
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
@@ -139,9 +162,9 @@ static void yacu_run_suite(YacuOptions options, const YacuSuite *suiteIt)
 {
     for (const YacuTest *testIt = suiteIt->tests; !end_of_tests(*testIt); testIt++)
     {
-        if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
+        if (options.singleTest == NULL || strcmp(options.singleTest, testIt->name) == 0)
         {
-            yacu_run_test(*testIt, options.runData);
+            yacu_run_test(options.decorators, *testIt, options.runData);
         }
     }
 }
@@ -150,7 +173,7 @@ void yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
     for (const YacuSuite *suiteIt = suites; !end_of_suites(*suiteIt); suiteIt++)
     {
-        if (options.suiteName == NULL || strcmp(options.suiteName, suiteIt->name) == 0)
+        if (options.singleSuite == NULL || strcmp(options.singleSuite, suiteIt->name) == 0)
         {
             yacu_run_suite(options, suiteIt);
         }

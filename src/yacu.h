@@ -44,19 +44,6 @@ typedef enum YacuStatus
     FATAL = 99,
 } YacuStatus;
 
-typedef struct YacuOptions
-{
-    const char *suiteName;
-    const char *testName;
-    const void *runData;
-} YacuOptions;
-
-YacuOptions yacu_default_options();
-
-#ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
-#define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
-#endif
-
 typedef void (*YacuTestLog)(void *logData, const char *message);
 
 typedef struct YacuTestRun
@@ -68,6 +55,31 @@ typedef struct YacuTestRun
 } YacuTestRun;
 
 typedef void (*YacuTestFcn)(YacuTestRun *testRun);
+
+typedef struct YacuTestFcnDecorator
+{
+    YacuTestFcn before;
+    YacuTestFcn after;
+} YacuTestFcnDecorator;
+
+#define END_OF_DECORATORS \
+    {                     \
+        NULL, NULL        \
+    }
+
+typedef struct YacuOptions
+{
+    const char *singleSuite;
+    const char *singleTest;
+    const void *runData;
+    const YacuTestFcnDecorator *decorators;
+} YacuOptions;
+
+YacuOptions yacu_default_options();
+
+#ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
+#define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
+#endif
 
 typedef struct YacuTest
 {
