@@ -6,11 +6,8 @@
 void forked_assert_failed_cmp_int(YacuTestRun *forkedTestRun)
 {
     int small = -1;
-    printf("%d\n", small);
 
-    printf("before\n");
     YACU_ASSERT_LT_INT(forkedTestRun, small, -2);
-    printf("after\n");
 }
 
 void test_assert_failed_cmp_int(YacuTestRun *testRun)
