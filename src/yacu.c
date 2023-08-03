@@ -49,7 +49,6 @@ static bool end_of_reports(YacuReport *report)
 YacuOptions yacu_default_options()
 {
     YacuOptions options = {
-        .action = RUN_TESTS,
         .fork = true,
         .suiteName = NULL,
         .testName = NULL,
@@ -73,35 +72,6 @@ static void buffer_append(char *buffer, size_t bufferMaxSize, const char *format
     va_end(args);
 }
 
-const char *helpString = "Usage: [<option1> <option2>...]\n"
-                         " --no-fork\n"
-                         "     Do not use fork from unistd.h to run the tests.\n"
-                         "     The tests are executed sequentially and execution stops when the first one fails.\n"
-                         " --test <suiteName> <testName>\n"
-                         "     Run a single test named <testName> from the suite named <suiteName>.\n"
-                         " --suite <suiteName>\n"
-                         "     Run all tests from the suite named <suiteName>.\n"
-                         " --list\n"
-                         "     Prints the list of all available suites and tests.\n"
-                         "     This should be the only option used.\n"
-                         " --junit <xmlFile>"
-                         "     Save the test reports in <xmlFile> in JUnit format.\n"
-                         " --help\n"
-                         "     Prints this help message and exits.\n"
-                         "     This should be the only option used.";
-
-static void list_suites(FILE *file, const YacuSuite *suites)
-{
-    for (const YacuSuite *suite = suites; !end_of_suites(*suite); suite++)
-    {
-        fprintf(file, "%s\n", suite->name);
-        for (const YacuTest *test = suite->tests; !end_of_tests(*test); test++)
-        {
-            fprintf(file, "- %s\n", test->name);
-        }
-    }
-}
-
 static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuOptions *options, bool withTest)
 {
     if (argc <= i + (withTest ? 2 : 1))
@@ -109,7 +79,6 @@ static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuO
         exit(WRONG_ARGS);
     }
     options->suiteName = argv[i + 1];
-    options->action = RUN_TESTS;
     if (withTest)
     {
         options->testName = argv[i + 2];
@@ -121,15 +90,7 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
     YacuOptions options = yacu_default_options();
     for (int i = 1; i < argc; i++)
     {
-        if (strcmp(argv[i], "--help") == 0)
-        {
-            options.action = HELP;
-        }
-        else if (strcmp(argv[i], "--list") == 0)
-        {
-            options.action = LIST;
-        }
-        else if (strcmp(argv[i], "--test") == 0)
+        if (strcmp(argv[i], "--test") == 0)
         {
             process_test_or_suite_arg(i, argc, argv, &options, true);
             i = i + 2;
@@ -476,7 +437,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
     }
 }
 
-static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
+YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
 {
     YacuStatus runStatus = OK;
     JUnitReport jUnitInitial = {
@@ -519,21 +480,4 @@ static YacuStatus run_tests(YacuOptions options, const YacuSuite *suites)
     }
     on_suites_finished(reports);
     return runStatus;
-}
-
-YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
-{
-    switch (options.action)
-    {
-    case LIST:
-        list_suites(stdout, suites);
-        return OK;
-    case RUN_TESTS:
-        return run_tests(options, suites);
-    case HELP:
-        printf("%s\n", helpString);
-        return OK;
-    default:
-        return FATAL;
-    }
 }
