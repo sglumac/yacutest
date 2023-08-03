@@ -33,7 +33,7 @@ SOFTWARE.
 #include <stdarg.h>
 #include <string.h>
 
-typedef enum YacuStatus
+typedef enum YacuRunStatus
 {
     OK = 0,
     TEST_FAILURE = 1,
@@ -42,30 +42,44 @@ typedef enum YacuStatus
     FILE_FAIL = 4,
     TEST_ERROR = 5,
     FATAL = 99,
-} YacuStatus;
+} YacuRunStatus;
 
 typedef void (*YacuTestLog)(void *logData, const char *message);
+
+struct YacuTestRun;
+
+typedef void (*YacuTestFcn)(struct YacuTestRun *testRun);
+
+typedef struct YacuTest
+{
+    const char *name;
+    YacuTestFcn fcn;
+} YacuTest;
+
+struct YacuTestFcnDecorator;
+
+struct YacuTestRun;
+
+typedef void (*YacuTestDecoratorFcn)(const struct YacuTestFcnDecorator *decorators, struct YacuTestRun *testRun);
+
+typedef struct YacuTestFcnDecorator
+{
+    YacuTestDecoratorFcn decorate;
+} YacuTestFcnDecorator;
+
+#define END_OF_DECORATORS \
+    {                     \
+        NULL              \
+    }
 
 typedef struct YacuTestRun
 {
     const void *runData;
     YacuTestLog log;
     void *logData;
-
+    const YacuTest *test;
+    YacuRunStatus status;
 } YacuTestRun;
-
-typedef void (*YacuTestFcn)(YacuTestRun *testRun);
-
-typedef struct YacuTestFcnDecorator
-{
-    YacuTestFcn before;
-    YacuTestFcn after;
-} YacuTestFcnDecorator;
-
-#define END_OF_DECORATORS \
-    {                     \
-        NULL, NULL        \
-    }
 
 typedef struct YacuOptions
 {
@@ -80,12 +94,6 @@ YacuOptions yacu_default_options();
 #ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
 #define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
 #endif
-
-typedef struct YacuTest
-{
-    const char *name;
-    YacuTestFcn fcn;
-} YacuTest;
 
 #define END_OF_TESTS \
     {                \
@@ -167,20 +175,5 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...);
 
 #define YACU_ASSERT_APPROX_EQ_DBL(testRun, left, right, tol) \
     YACU_ASSERT_APPROX_EQ(testRun, "%lf", "%lf", "%lf", double, double, double, left, right, tol)
-
-#if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
-#define FORK_AVAILABLE
-typedef pid_t YacuProcessHandle;
-#include <unistd.h>
-#include <sys/wait.h>
-#else
-typedef int YacuProcessHandle;
-#endif
-
-YacuProcessHandle yacu_fork();
-
-bool is_forked(YacuProcessHandle pid);
-
-YacuStatus wait_for_forked(YacuProcessHandle forkedId);
 
 #endif // YACU_H

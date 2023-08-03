@@ -17,7 +17,7 @@ install:
 test_script:
 - mkdir build
 - cd build
-- cmake -DCOVERAGE=True -DBUILD_YACU_TESTS4TESTS=True -DCMAKE_BUILD_TYPE=Debug ..
+- cmake -DCOVERAGE=True -DBUILD_YACU_TESTS4TESTS=True -DCMAKE_BUILD_TYPE=Debug -DBUILD_FORKED_TESTS=True ..
 - cmake --build . --target yacucoverage
 - cd ..
 

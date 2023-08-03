@@ -41,9 +41,9 @@ static bool end_of_tests(const YacuTest test)
     return test.name == NULL;
 }
 
-static bool end_of_decorators(const YacuTestFcnDecorator decorator)
+static bool end_of_decorators(const YacuTestFcnDecorator *decorator)
 {
-    return decorator.before == NULL && decorator.after == NULL;
+    return decorator->decorate == NULL;
 }
 
 static YacuTestFcnDecorator DEFAULT_DECORATORS[] = {END_OF_DECORATORS};
@@ -58,39 +58,55 @@ YacuOptions yacu_default_options()
     return options;
 }
 
-YacuProcessHandle yacu_fork()
+static void yacu_basic_log(void *logData, const char *message)
+{
+    UNUSED(logData);
+    printf("%s\n", message);
+}
+
+static void yacu_run_test(const YacuTestFcnDecorator *decorators, YacuTestRun *testRun)
+{
+    if (end_of_decorators(decorators))
+    {
+        testRun->test->fcn(testRun);
+    }
+    else
+    {
+        decorators->decorate(decorators + 1, testRun);
+    }
+}
+
+#ifdef FORK_TESTS
+
+#if defined(__unix__) || defined(UNIX) || defined(__linux__) || defined(LINUX)
+typedef pid_t YacuProcessHandle;
+#include <unistd.h>
+#include <sys/wait.h>
+
+static YacuProcessHandle yacu_fork()
 {
     fflush(stdout);
     fflush(stderr);
-#ifdef FORK_AVAILABLE
     pid_t pid = fork();
     if (pid < 0)
     {
         exit(FORK_FAIL);
     }
     return pid;
-#else
-    return -1;
-#endif
 }
 
-bool is_forked(YacuProcessHandle pid)
+static bool is_forked(YacuProcessHandle pid)
 {
-#ifdef FORK_AVAILABLE
     return pid == 0;
-#else
-    return false;
-#endif
 }
 
-YacuStatus wait_for_forked(YacuProcessHandle forkedId)
+static YacuRunStatus wait_for_forked(YacuProcessHandle forkedId)
 {
-#ifdef FORK_AVAILABLE
     int status;
     waitpid(forkedId, &status, 0);
     if (WIFEXITED(status))
     {
-        YacuStatus testStatus = WEXITSTATUS(status);
+        YacuRunStatus testStatus = WEXITSTATUS(status);
         printf("exited, status=%d\n", testStatus);
         return testStatus;
     }
@@ -113,36 +129,24 @@ YacuStatus wait_for_forked(YacuProcessHandle forkedId)
     {
         return TEST_ERROR;
     }
-#else
-    return OK;
+}
 #endif
+
+static void yacu_fork_decorate_test_fcn(const YacuTestFcnDecorator *decorators, YacuTestRun *testRun)
+{
+    YacuProcessHandle pid = yacu_fork();
+    if (is_forked(pid))
+    {
+        yacu_run_test(decorators, testRun);
+        exit(testRun->status);
+    }
+    testRun->status = wait_for_forked(pid);
 }
 
-static void yacu_basic_log(void *logData, const char *message)
-{
-    UNUSED(logData);
-    printf("%s\n", message);
-}
-
-static void yacu_run_test(const YacuTestFcnDecorator *decorators, YacuTest test, const void *runData)
-{
-    YacuTestRun testRun = {.log = yacu_basic_log, .runData = runData};
-    for (const YacuTestFcnDecorator *decoratorIt = decorators; !end_of_decorators(*decoratorIt); decoratorIt++)
-    {
-        if (decoratorIt->before != NULL)
-        {
-            decoratorIt->before(&testRun);
-        }
-    }
-    test.fcn(&testRun);
-    for (const YacuTestFcnDecorator *decoratorIt = decorators; !end_of_decorators(*decoratorIt); decoratorIt++)
-    {
-        if (decoratorIt->after != NULL)
-        {
-            decoratorIt->after(&testRun);
-        }
-    }
-}
+YacuTestFcnDecorator YACU_FORK_TEST_FCN = {
+    .decorate = yacu_fork_decorate_test_fcn,
+};
+#endif
 
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
 {
@@ -164,7 +168,11 @@ static void yacu_run_suite(YacuOptions options, const YacuSuite *suiteIt)
     {
         if (options.singleTest == NULL || strcmp(options.singleTest, testIt->name) == 0)
         {
-            yacu_run_test(options.decorators, *testIt, options.runData);
+            YacuTestRun testRun = {
+                .log = yacu_basic_log,
+                .runData = options.runData,
+                .test = testIt};
+            yacu_run_test(options.decorators, &testRun);
         }
     }
 }
