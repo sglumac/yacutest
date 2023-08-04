@@ -80,24 +80,9 @@ typedef struct YacuOptions
 
 YacuOptions yacu_default_options();
 
-#ifndef YACU_JUNIT_MAX_SIZE
-#define YACU_JUNIT_MAX_SIZE 1000000
-#endif
+struct YacuTestRun;
 
-#ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
-#define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
-#endif
-
-typedef struct YacuTestRun
-{
-    YacuStatus result;
-    char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
-    bool forked;
-    YacuReportPtr *reports;
-    const void *runData;
-} YacuTestRun;
-
-typedef void (*YacuTestFcn)(YacuTestRun *testRun);
+typedef void (*YacuTestFcn)(struct YacuTestRun *testRun);
 
 typedef struct YacuTest
 {
@@ -120,6 +105,25 @@ typedef struct YacuSuite
     {                 \
         NULL, NULL    \
     }
+
+#ifndef YACU_JUNIT_MAX_SIZE
+#define YACU_JUNIT_MAX_SIZE 1000000
+#endif
+
+#ifndef YACU_TEST_RUN_MESSAGE_MAX_SIZE
+#define YACU_TEST_RUN_MESSAGE_MAX_SIZE 100000
+#endif
+
+typedef struct YacuTestRun
+{
+    YacuStatus result;
+    char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
+    bool forked;
+    YacuReportPtr *reports;
+    const void *runData;
+    const YacuSuite *suite;
+    const YacuTest *test;
+} YacuTestRun;
 
 YacuOptions yacu_process_args(int argc, char const *argv[]);
 
