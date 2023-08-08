@@ -7,30 +7,38 @@ typedef struct FileReport
     const char *filePath;
 } FileReport;
 
-static void file_report_on_test_finished(YacuReportState state, YacuStatus result, const char *message)
+static void file_report_action(YacuReportState state, YacuReportEvent reportEvent, const struct YacuSuite *suite, const struct YacuTestRun *testRun)
 {
-    UNUSED(result);
+    UNUSED(suite);
     FileReport *fileReport = state;
-
     FILE *reportFile = fopen(fileReport->filePath, "w");
-    fputs(message, reportFile);
+
+    printf("event = %d\n", reportEvent);
+    printf("1\n");
+
+    switch (reportEvent)
+    {
+    case TEST_RUN_FINISHED:
+        printf("2\n");
+        printf("testRun->message = %s\n", testRun->message);
+        fputs(testRun->message, reportFile);
+        break;
+    default:
+        printf("3\n");
+        break;
+    }
+
+    printf("4\n");
     fflush(reportFile);
     fclose(reportFile);
+    printf("5\n");
 }
-
-static void file_report_on_suite_finished(YacuReportState state) { UNUSED(state); }
-
-static void file_report_on_suites_finished(YacuReportState state) { UNUSED(state); }
 
 YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char *failureMessage)
 {
     UNUSED(testRun);
     FileReport fileReportState = {.filePath = reportPath};
-    YacuReport fileReport = {
-        .state = &fileReportState,
-        .on_test_finished = file_report_on_test_finished,
-        .on_suite_finished = file_report_on_suite_finished,
-        .on_suites_finished = file_report_on_suites_finished};
+    YacuReport fileReport = {.state = &fileReportState, .action = file_report_action};
     YacuReportPtr reports[] = {&fileReport, &END_OF_REPORTS};
     YacuTestRun forkedTestRun = {.result = OK, .message = "", .forked = false, .reports = reports};
     YacuProcessHandle pid = yacu_fork();

@@ -44,23 +44,26 @@ typedef enum YacuStatus
     FATAL = 99,
 } YacuStatus;
 
+typedef enum YacuReportEvent
+{
+    SUITE_STARTED = 31,
+    TEST_RUN_STARTED = 32,
+    TEST_RUN_FINISHED = 33,
+    SUITE_FINISHED = 34,
+    TESTING_FINISHED = 35,
+} YacuReportEvent;
+
+struct YacuTestRun;
+
+struct YacuSuite;
+
 typedef void *YacuReportState;
-typedef void (*YacuReportOnSuitesStarted)(YacuReportState state);
-typedef void (*YacuReportOnSuiteStarted)(YacuReportState state, const char *suiteName);
-typedef void (*YacuReportOnTestStarted)(YacuReportState state, const char *testName);
-typedef void (*YacuReportOnTestFinished)(YacuReportState state, YacuStatus result, const char *message);
-typedef void (*YacuReportOnSuiteFinished)(YacuReportState state);
-typedef void (*YacuReportOnSuitesFinished)(YacuReportState state);
+typedef void (*YacuReportAction)(YacuReportState state, YacuReportEvent reportEvent, const struct YacuSuite *suite, const struct YacuTestRun *testRun);
 
 typedef struct YacuReport
 {
     YacuReportState state;
-    YacuReportOnSuitesStarted on_suites_started;
-    YacuReportOnSuiteStarted on_suite_started;
-    YacuReportOnTestStarted on_test_started;
-    YacuReportOnTestFinished on_test_finished;
-    YacuReportOnSuiteFinished on_suite_finished;
-    YacuReportOnSuitesFinished on_suites_finished;
+    YacuReportAction action;
 } YacuReport;
 
 typedef YacuReport *YacuReportPtr;
