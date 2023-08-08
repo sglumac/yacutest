@@ -11,27 +11,20 @@ static void file_report_action(YacuReportState state, YacuReportEvent reportEven
 {
     UNUSED(suite);
     FileReport *fileReport = state;
-    FILE *reportFile = fopen(fileReport->filePath, "w");
-
-    printf("event = %d\n", reportEvent);
-    printf("1\n");
 
     switch (reportEvent)
     {
     case TEST_RUN_FINISHED:
-        printf("2\n");
-        printf("testRun->message = %s\n", testRun->message);
+    {
+        FILE *reportFile = fopen(fileReport->filePath, "w");
         fputs(testRun->message, reportFile);
-        break;
-    default:
-        printf("3\n");
+        fflush(reportFile);
+        fclose(reportFile);
         break;
     }
-
-    printf("4\n");
-    fflush(reportFile);
-    fclose(reportFile);
-    printf("5\n");
+    default:
+        break;
+    }
 }
 
 YacuStatus forked_test(YacuTestRun *testRun, const char *reportPath, ForkedAction forkedAction, char *failureMessage)
