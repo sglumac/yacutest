@@ -9,7 +9,7 @@ endif()
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-if(COVERAGE STREQUAL "True")
+if(YACU_CMAKE_COVERAGE STREQUAL "True")
   include(CodeCoverage)
   append_coverage_compiler_flags()
   setup_target_for_coverage_gcovr_html(
@@ -22,6 +22,6 @@ endif()
 
 add_subdirectory(src)
 
-if(BUILD_YACU_TESTS4TESTS STREQUAL "True")
+if(YACU_CMAKE_TESTS4TESTS STREQUAL "True")
   add_subdirectory(tests4tests)
 endif()
