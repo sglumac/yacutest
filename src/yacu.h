@@ -74,7 +74,6 @@ typedef struct YacuOptions
 {
     const char *suiteName;
     const char *testName;
-    bool fork;
     const char *jUnitPath;
     bool stdoutReport;
     YacuReport *customReport;
@@ -121,7 +120,6 @@ typedef struct YacuTestRun
 {
     YacuStatus result;
     char message[YACU_TEST_RUN_MESSAGE_MAX_SIZE];
-    bool forked;
     YacuReportPtr *reports;
     const void *runData;
     const YacuSuite *suite;
@@ -189,11 +187,5 @@ typedef pid_t YacuProcessHandle;
 #else
 typedef int YacuProcessHandle;
 #endif
-
-YacuProcessHandle yacu_fork();
-
-bool is_forked(YacuProcessHandle pid);
-
-YacuStatus wait_for_forked(YacuProcessHandle forkedId);
 
 #endif // YACU_H

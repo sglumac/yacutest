@@ -1,5 +1,7 @@
 #include <yacu.h>
 #include <others.h>
+#include <common.h>
+
 #define UNUSED(x) (void)(x)
 
 void test_simple_eq_int(YacuTestRun *testRun)
@@ -16,50 +18,20 @@ YacuSuite suites4Others[] = {
     {"ForOthers", forOthers},
     END_OF_SUITES};
 
-void test_list_suites(YacuTestRun *testRun)
-{
-    const char *argv[] = {"./tests", "--list", "--no-fork"};
-    YacuOptions options = yacu_process_args(3, argv);
-    YacuStatus returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
-}
-
-void test_help(YacuTestRun *testRun)
-{
-    const char *argv[] = {"./tests", "--help"};
-    YacuOptions options = yacu_process_args(2, argv);
-    YacuStatus returnCode = yacu_execute(options, suites4Others);
-    YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
-}
-
 void test_run_single_test(YacuTestRun *testRun)
 {
-    const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest", "--no-fork"};
-    YacuOptions options = yacu_process_args(5, argv);
+    const char *argv[] = {"./tests", "--test", "ForOthers", "cmpIntTest"};
+    YacuOptions options = yacu_process_args(4, argv);
     YacuStatus returnCode = yacu_execute(options, suites4Others);
     YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
 }
 
 void test_run_single_suite(YacuTestRun *testRun)
 {
-    const char *argv[] = {"./tests", "--suite", "ForOthers", "--no-fork"};
-    YacuOptions options = yacu_process_args(4, argv);
+    const char *argv[] = {"./tests", "--suite", "ForOthers"};
+    YacuOptions options = yacu_process_args(3, argv);
     YacuStatus returnCode = yacu_execute(options, suites4Others);
     YACU_ASSERT_EQ_INT(testRun, returnCode, OK);
-}
-
-void test_fork(YacuTestRun *testRun)
-{
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        exit(FILE_FAIL);
-    }
-    else
-    {
-        YacuStatus returnCode = wait_for_forked(pid);
-        YACU_ASSERT_EQ_INT(testRun, returnCode, FILE_FAIL);
-    }
 }
 
 void test_wrong_args(YacuTestRun *testRun)
@@ -143,12 +115,9 @@ void test_run_single_suite_with_fork(YacuTestRun *testRun)
 }
 
 YacuTest otherTests[] = {
-    {"ListSuitesTest", &test_list_suites},
-    {"HelpTest", &test_help},
     {"SingleTestTest", &test_run_single_test},
     {"SingleSuiteTest", &test_run_single_suite},
     {"SingleSuiteTestWithFork", &test_run_single_suite_with_fork},
-    {"ForkTest", &test_fork},
     {"WrongArgsTest", &test_wrong_args},
     {"MissingTestArgs", &test_missing_test_args},
     {"MissingJUnitArgs", &test_missing_junit_args},

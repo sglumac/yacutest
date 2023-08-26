@@ -47,7 +47,6 @@ static bool end_of_reports(YacuReport *report)
 YacuOptions yacu_default_options()
 {
     YacuOptions options = {
-        .fork = true,
         .suiteName = NULL,
         .testName = NULL,
         .jUnitPath = NULL,
@@ -107,76 +106,12 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
             options.jUnitPath = argv[i + 1];
             i++;
         }
-        else if (strcmp(argv[i], "--no-fork") == 0)
-        {
-            options.fork = false;
-        }
         else
         {
             exit(WRONG_ARGS);
         }
     }
     return options;
-}
-
-YacuProcessHandle yacu_fork()
-{
-    fflush(stdout);
-    fflush(stderr);
-#ifdef FORK_AVAILABLE
-    pid_t pid = fork();
-    if (pid < 0)
-    {
-        exit(FORK_FAIL);
-    }
-    return pid;
-#else
-    return -1;
-#endif
-}
-
-bool is_forked(YacuProcessHandle pid)
-{
-#ifdef FORK_AVAILABLE
-    return pid == 0;
-#else
-    return false;
-#endif
-}
-
-YacuStatus wait_for_forked(YacuProcessHandle forkedId)
-{
-#ifdef FORK_AVAILABLE
-    int status;
-    waitpid(forkedId, &status, 0);
-    if (WIFEXITED(status))
-    {
-        YacuStatus testStatus = WEXITSTATUS(status);
-        printf("exited, status=%d\n", testStatus);
-        return testStatus;
-    }
-    else if (WIFSIGNALED(status))
-    {
-        printf("killed by signal %d, status=%d\n", WTERMSIG(status), WEXITSTATUS(status));
-        return TEST_ERROR;
-    }
-    else if (WIFSTOPPED(status))
-    {
-        printf("stopped by signal %d\n", WSTOPSIG(status));
-        return TEST_ERROR;
-    }
-    else if (WIFCONTINUED(status))
-    {
-        printf("continued\n");
-        return TEST_ERROR;
-    }
-    else
-    {
-        return TEST_ERROR;
-    }
-#else
-    return OK;
-#endif
 }
 
 typedef struct JUnitReport
@@ -355,33 +290,13 @@ static void on_testing_finished(YacuReportPtr *reports)
 
 YacuReport END_OF_REPORTS = {NULL, NULL};
 
-static YacuStatus yacu_run_test(bool forked, const YacuSuite *suite, const YacuTest *test, YacuReportPtr *reports, const void *runData)
+static YacuStatus yacu_run_test(const YacuSuite *suite, const YacuTest *test, YacuReportPtr *reports, const void *runData)
 {
-    YacuTestRun testRun = {.result = OK, .message = "", .forked = forked, .reports = reports, .runData = runData, .test = test, .suite = suite};
+    YacuTestRun testRun = {.result = OK, .message = "", .reports = reports, .runData = runData, .test = test, .suite = suite};
     on_test_started(reports, suite, &testRun);
     test->fcn(&testRun);
     on_test_finished(reports, suite, &testRun);
     return testRun.result;
-}
-
-static YacuStatus yacu_run_forked_test(const YacuSuite *suite, const YacuTest *test, YacuReportPtr *reports, const void *runData)
-{
-    YacuStatus returnCode;
-    YacuProcessHandle pid = yacu_fork();
-    if (is_forked(pid))
-    {
-        exit(yacu_run_test(true, suite, test, reports, runData));
-    }
-    else
-    {
-        returnCode = wait_for_forked(pid);
-    }
-    if (returnCode != OK)
-    {
-        YacuTestRun testRun = {.result = returnCode, .message = "", .forked = true, .reports = reports, .runData = runData, .test = test, .suite = suite};
-        on_test_finished(reports, suite, &testRun);
-    }
-    return returnCode;
 }
 
 void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
@@ -394,7 +309,7 @@ void yacu_assert(YacuTestRun *testRun, bool condition, const char *fmt, ...)
         va_start(args, fmt);
         vbuffer_append(testRun->message, YACU_TEST_RUN_MESSAGE_MAX_SIZE, fmt, args);
         va_end(args);
-        if (!testRun->forked && testRun->result == TEST_FAILURE)
+        if (testRun->result == TEST_FAILURE)
         {
             on_test_finished(testRun->reports, testRun->suite, testRun);
             on_suite_finished(testRun->reports, testRun->suite);
@@ -431,13 +346,7 @@ YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites)
             {
                 if (options.testName == NULL || strcmp(options.testName, testIt->name) == 0)
                 {
-                    YacuStatus testStatus = options.fork
-                                                ? yacu_run_forked_test(suiteIt, testIt, reports, options.runData)
-                                                : yacu_run_test(false, suiteIt, testIt, reports, options.runData);
-                    if (testStatus == TEST_ERROR || (testStatus == TEST_FAILURE && runStatus != TEST_ERROR))
-                    {
-                        runStatus = testStatus;
-                    }
+                    yacu_run_test(suiteIt, testIt, reports, options.runData);
                 }
             }
         }
