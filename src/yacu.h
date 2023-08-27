@@ -126,7 +126,7 @@ typedef struct YacuTestRun
     const YacuTest *test;
 } YacuTestRun;
 
-YacuOptions yacu_process_args(int argc, char const *argv[]);
+void yacu_apply_cmd_args(YacuOptions *options, int argc, char const *argv[]);
 
 YacuStatus yacu_execute(YacuOptions options, const YacuSuite *suites);
 

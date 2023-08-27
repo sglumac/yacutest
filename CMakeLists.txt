@@ -14,7 +14,7 @@ if(YACU_CMAKE_COVERAGE STREQUAL "True")
   append_coverage_compiler_flags()
   setup_target_for_coverage_gcovr_html(
     NAME yacucoverage
-    EXECUTABLE tests4tests --junit tests4tests.xml --no-fork
+    EXECUTABLE tests4tests --junit tests4tests.xml
     DEPENDENCIES tests4tests
     BASE_DIRECTORY ${PROJECT_SOURCE_DIR}
   )

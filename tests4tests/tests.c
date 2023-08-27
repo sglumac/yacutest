@@ -4,7 +4,6 @@
 #include <failures.h>
 #include <others.h>
 
-
 YacuSuite suites[] = {
     {"Assertions", assertionTests},
     {"AssertionFailures", assertionFailuresTests},
@@ -13,6 +12,7 @@ YacuSuite suites[] = {
 
 int main(int argc, char const *argv[])
 {
-    YacuOptions options = yacu_process_args(argc, argv);
+    YacuOptions options = yacu_default_options();
+    yacu_apply_cmd_args(&options, argc, argv);
     return yacu_execute(options, suites);
 }

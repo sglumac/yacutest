@@ -82,19 +82,18 @@ static void process_test_or_suite_arg(int i, int argc, char const *argv[], YacuO
     }
 }
 
-YacuOptions yacu_process_args(int argc, char const *argv[])
+void yacu_apply_cmd_args(YacuOptions *options, int argc, char const *argv[])
 {
-    YacuOptions options = yacu_default_options();
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--test") == 0)
         {
-            process_test_or_suite_arg(i, argc, argv, &options, true);
+            process_test_or_suite_arg(i, argc, argv, options, true);
             i = i + 2;
         }
         else if (strcmp(argv[i], "--suite") == 0)
         {
-            process_test_or_suite_arg(i, argc, argv, &options, false);
+            process_test_or_suite_arg(i, argc, argv, options, false);
             i++;
         }
         else if (strcmp(argv[i], "--junit") == 0)
@@ -103,7 +102,7 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
             {
                 exit(WRONG_ARGS);
             }
-            options.jUnitPath = argv[i + 1];
+            options->jUnitPath = argv[i + 1];
             i++;
         }
         else
@@ -111,7 +110,6 @@ YacuOptions yacu_process_args(int argc, char const *argv[])
             exit(WRONG_ARGS);
         }
     }
-    return options;
 }
 
 typedef struct JUnitReport
